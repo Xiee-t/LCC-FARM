@@ -35,7 +35,7 @@
             <form method="POST" action="{{ route('login.post') }}">
                 @csrf
                 <div style="margin-bottom: 15px;">
-                    <input type="text" name="phone" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;" placeholder="Enter Phone Number" required>
+                    <input type="text" name="login" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;" placeholder="Enter phone or email" required>
                 </div>
                 
                 <div style="margin-bottom: 20px;">
