@@ -1,6 +1,85 @@
 @extends('layouts.app')
 
 @section('content')
+@if(request()->routeIs('distributor-profile'))
+@include('components.distributor_theme')
+@include('components.dashboard_navbar')
+
+<div class="dist-page">
+    <div class="dist-shell" style="max-width: 900px;">
+        <section class="dist-hero">
+            <div class="dist-hero-head">
+                <div>
+                    <h2>My Profile</h2>
+                    <p>Review your distributor account details and quick actions.</p>
+                </div>
+                <a href="{{ route('distributor-dashboard') }}" class="dist-back-link">Back to Dashboard</a>
+            </div>
+        </section>
+
+        <section class="dist-card dist-card-padded" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 18px; flex-wrap: wrap;">
+                <div style="width: 76px; height: 76px; background: linear-gradient(135deg, #b84934, #822418); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.8rem;">&#128100;</div>
+                <div>
+                    <h3 style="margin: 0 0 4px 0;">{{ session('user_identity') ?? 'John Doe' }}</h3>
+                    <p class="dist-muted" style="margin: 0;">{{ session('user_registration')['email'] ?? 'john@example.com' }}</p>
+                </div>
+            </div>
+
+            <div class="dist-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                <div>
+                    <p class="dist-muted" style="margin: 0 0 4px 0; font-size: 0.85rem;">Phone Number</p>
+                    <p style="margin: 0; font-weight: 700;">{{ session('user_registration')['phone'] ?? '+63 9XX XXX XXXX' }}</p>
+                </div>
+                <div>
+                    <p class="dist-muted" style="margin: 0 0 4px 0; font-size: 0.85rem;">Account Type</p>
+                    <p style="margin: 0; font-weight: 700; text-transform: capitalize;">{{ session('user_role') ?? 'Buyer' }}</p>
+                </div>
+                <div>
+                    <p class="dist-muted" style="margin: 0 0 4px 0; font-size: 0.85rem;">Member Since</p>
+                    <p style="margin: 0; font-weight: 700;">March 25, 2026</p>
+                </div>
+                <div>
+                    <p class="dist-muted" style="margin: 0 0 4px 0; font-size: 0.85rem;">Account Status</p>
+                    <span class="dist-status-chip dist-status-delivered">Active &amp; Verified</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="dist-card dist-card-padded" style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0;">Quick Actions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <button onclick="editProfile()" class="dist-pill-btn dist-pill-btn-primary" type="button">Edit Profile</button>
+                <button onclick="changePassword()" class="dist-pill-btn dist-pill-btn-neutral" type="button">Change Password</button>
+            </div>
+
+            <ul style="list-style: none; margin: 0; padding: 0;">
+                <li style="padding: 10px 0; border-bottom: 1px solid #f0e8e2;"><a href="{{ route('distributor-available-orders') }}" style="text-decoration: none; color: #7b2117; font-weight: 700;">View Available Supplier Orders</a></li>
+                <li style="padding: 10px 0; border-bottom: 1px solid #f0e8e2;"><a href="{{ route('distributor-track-orders') }}" style="text-decoration: none; color: #7b2117; font-weight: 700;">Track My Deliveries</a></li>
+                <li style="padding: 10px 0; border-bottom: 1px solid #f0e8e2;"><a href="{{ route('distributor-manage-suppliers') }}" style="text-decoration: none; color: #7b2117; font-weight: 700;">Manage Suppliers</a></li>
+                <li style="padding: 10px 0;"><a onclick="deleteAccount()" style="text-decoration: none; color: #6a5e59; cursor: pointer; font-weight: 700;">Delete Account</a></li>
+            </ul>
+        </section>
+    </div>
+    @include('components.footer')
+</div>
+
+<script>
+    function editProfile() {
+        alert('Edit Profile feature coming soon!');
+    }
+
+    function changePassword() {
+        alert('Change Password feature coming soon!');
+    }
+
+    function deleteAccount() {
+        if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+            alert('Account deletion requested. Please confirm via email.');
+        }
+    }
+</script>
+@else
 @include('components.dashboard_navbar')
 
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -104,4 +183,5 @@
         }
     }
 </script>
+@endif
 @endsection

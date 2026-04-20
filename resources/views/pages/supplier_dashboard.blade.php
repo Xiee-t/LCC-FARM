@@ -125,3 +125,4 @@
 
 @include('components.footer')
 
+@endsection

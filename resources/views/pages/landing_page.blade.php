@@ -9,7 +9,6 @@
     .button-pill { border-radius: 999px; }
 </style>
 <div class="landing-body" style="background-color: #f9f7f3;">
-    <!-- Top Nav -->
     <header style="position: sticky; top: 0; z-index: 100; background: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
         <div style="max-width: 1200px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -18,11 +17,9 @@
             </div>
             <nav style="display: flex; align-items: center; gap: 20px; font-weight: 600; color: #555;">
                 <a href="{{ route('dashboard') }}" style="color: #333; text-decoration: none;">Dashboard</a>
-                <a href="{{ route('place-order') }}" style="color: #333; text-decoration: none;">Place Order</a>
-                <a href="{{ route('my-orders') }}" style="color: #333; text-decoration: none;">My Orders</a>
                 <a href="{{ route('profile') }}" style="color: #333; text-decoration: none;">Profile</a>
             </nav>
-            <a href="{{ route('logout') }}" style="padding: 11px 20px; border-radius: 999px; background: #d32f2f; color: white; text-decoration: none; font-weight: 700;">Login</a>
+            <a href="{{ route('login') }}" style="padding: 11px 20px; border-radius: 999px; background: #d32f2f; color: white; text-decoration: none; font-weight: 700;">Login</a>
         </div>
     </header>
 
@@ -42,7 +39,6 @@
         </div>
     </section>
 
-    <!-- Product Tiers -->
     <section style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
         <div style="text-align: center; margin-bottom: 32px;">
             <h2 style="margin: 0; font-size: 2rem; color: #882828; font-weight: 800;">Egg Sizes And Pricing</h2>
@@ -81,11 +77,6 @@
                 <p style="margin: 0; font-size: 1.05rem; color: #b71c1c;"><strong>Retail: ₱280</strong> /Tray</p>
                 <p style="margin: 6px 0 0; color: #8f8f8f;">Wholesale (min 10): ₱270/Tray</p>
             </div>
-        </div>
-
-        <div style="display: flex; justify-content: center; gap: 14px; margin-top: 28px;">
-            <a href="{{ route('place-order') }}" style="background-color: #d32f2f; padding: 12px 38px; border-radius: 999px; color: white; text-decoration: none; font-weight: 700;" class="button-pill">Place Order</a>
-            <a href="{{ route('view-orders') }}" style="background-color: #555; padding: 12px 38px; border-radius: 999px; color: white; text-decoration: none; font-weight: 700;" class="button-pill">View Orders</a>
         </div>
     </section>
     </main>

@@ -8,146 +8,69 @@ class DistributorController extends Controller
 {
     public function dashboard()
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        // Mock data for distributor dashboard
+        // 1. Data for the metrics cards
         $stats = [
-            'pending_orders' => 12,
-            'total_orders_month' => 45,
-            'total_revenue' => 156000,
-            'active_suppliers' => 8,
+            'pending_orders' => 0,
+            'total_orders_month' => 0,
+            'total_revenue' => 0.00,
+            'active_suppliers' => 0,
         ];
 
+        // 2. Data for recent orders table
         $recentOrders = [
             [
-                'id' => 1,
-                'order_id' => '#ORD-2026-001',
-                'supplier' => 'Farm A Suppliers',
-                'product' => 'Medium Eggs',
-                'quantity' => 50,
-                'order_date' => 'Mar 20, 2026',
-                'expected_delivery' => 'Mar 22, 2026',
-                'status' => 'Pending',
-            ],
-            [
-                'id' => 2,
-                'order_id' => '#ORD-2026-002',
-                'supplier' => 'Green Farm Ltd',
+                'order_id' => 'ORD-1001',
+                'supplier' => 'LCC Farm 1',
                 'product' => 'Large Eggs',
-                'quantity' => 75,
-                'order_date' => 'Mar 19, 2026',
-                'expected_delivery' => 'Mar 21, 2026',
-                'status' => 'Delivered',
+                'quantity' => 10,
+                'expected_delivery' => '2026-04-25',
+                'status' => 'Pending'
+            ],
+        ];
+
+        // 3. Data for active suppliers (Includes rating and products to prevent errors)
+        $suppliers = [
+            [
+                'name' => 'LCC Farm 1', 
+                'status' => 'Active', 
+                'rating' => 4.8, 
+                'products' => 15
             ],
             [
-                'id' => 3,
-                'order_id' => '#ORD-2026-003',
-                'supplier' => 'Premium Eggs Co',
-                'product' => 'Small Eggs',
-                'quantity' => 30,
-                'order_date' => 'Mar 21, 2026',
-                'expected_delivery' => 'Mar 23, 2026',
-                'status' => 'In Transit',
+                'name' => 'Farm 2', 
+                'status' => 'Active', 
+                'rating' => 4.5, 
+                'products' => 10
             ],
         ];
 
-        $suppliers = [
-            ['name' => 'Farm A Suppliers', 'rating' => 4.8, 'products' => 'All Sizes', 'status' => 'Active'],
-            ['name' => 'Green Farm Ltd', 'rating' => 4.5, 'products' => 'Medium, Large', 'status' => 'Active'],
-            ['name' => 'Premium Eggs Co', 'rating' => 4.9, 'products' => 'All Sizes', 'status' => 'Active'],
-        ];
-
-        return view('pages.distributor_dashboard', [
-            'stats' => $stats,
-            'recentOrders' => $recentOrders,
-            'suppliers' => $suppliers,
-        ]);
-    }
-
-    public function profile()
-    {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        return view('pages.profile', ['role' => 'distributor']);
+        // 4. Pass all variables to the view using compact
+        return view('pages.distributor_dashboard', compact('stats', 'recentOrders', 'suppliers'));
     }
 
     public function availableOrders()
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        $orders = [
-            ['id' => 101, 'order_id' => '#ORD-2026-010', 'product' => 'Large Eggs', 'quantity' => 80, 'supplier' => 'Farm A Suppliers', 'delivery' => 'Mar 31, 2026', 'status' => 'Pending'],
-            ['id' => 102, 'order_id' => '#ORD-2026-011', 'product' => 'XL Eggs', 'quantity' => 40, 'supplier' => 'Green Farm Ltd', 'delivery' => 'Apr 01, 2026', 'status' => 'Pending'],
-            ['id' => 103, 'order_id' => '#ORD-2026-012', 'product' => 'Medium Eggs', 'quantity' => 100, 'supplier' => 'Premium Eggs Co', 'delivery' => 'Apr 02, 2026', 'status' => 'Pending'],
-        ];
-
-        return view('pages.distributor_available_orders', ['orders' => $orders]);
+        return view('pages.distributor_available_orders');
     }
 
-    public function acceptOrder(Request $request, $id)
+    public function acceptOrder($id)
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        // In real app, update DB order status; demo: flash message.
-        return redirect()->route('distributor-available-orders')->with('success', "Order #{$id} accepted successfully.");
+        // Logic to claim an order for delivery
+        return back()->with('success', 'Order accepted for delivery.');
     }
 
     public function trackOrders()
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        $trackedOrders = [
-            ['id' => 1, 'order_id' => '#ORD-2026-001', 'supplier' => 'Farm A Suppliers', 'product' => 'Medium Eggs', 'status' => 'In Transit', 'eta' => 'Apr 02, 2026'],
-            ['id' => 2, 'order_id' => '#ORD-2026-002', 'supplier' => 'Green Farm Ltd', 'product' => 'Large Eggs', 'status' => 'Delivered', 'eta' => 'Mar 21, 2026'],
-            ['id' => 3, 'order_id' => '#ORD-2026-003', 'supplier' => 'Premium Eggs Co', 'product' => 'Small Eggs', 'status' => 'Preparing', 'eta' => 'Apr 04, 2026'],
-        ];
-
-        return view('pages.distributor_track_orders', ['trackedOrders' => $trackedOrders]);
+        return view('pages.distributor_track_orders');
     }
 
     public function manageSuppliers()
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        $suppliers = [
-            ['name' => 'Farm A Suppliers', 'rating' => 4.8, 'products' => 'All Sizes', 'status' => 'Active'],
-            ['name' => 'Green Farm Ltd', 'rating' => 4.5, 'products' => 'Medium, Large', 'status' => 'Active'],
-            ['name' => 'Premium Eggs Co', 'rating' => 4.9, 'products' => 'All Sizes', 'status' => 'Active'],
-        ];
-
-        return view('pages.distributor_manage_suppliers', ['suppliers' => $suppliers]);
+        return view('pages.distributor_manage_suppliers');
     }
 
-    public function deliveryTracking($id)
+    public function profile()
     {
-        if (!session('user_logged_in') || session('user_role') !== 'distributor') {
-            return redirect()->route('login')->with('error', 'Please login as a distributor.');
-        }
-
-        $order = [
-            'id' => $id,
-            'order_id' => '#ORD-2026-0'.$id,
-            'supplier' => 'Farm A Suppliers',
-            'product' => 'Medium Eggs',
-            'quantity' => 120,
-            'current_status' => 'Preparing',
-            'route' => 'Nairobi → Kiambu → Nakuru',
-            'eta' => 'Apr 2, 2026',
-        ];
-
-        return view('pages.distributor_delivery_tracking', ['order' => $order]);
+        return view('pages.distributor_profile');
     }
 }
-
