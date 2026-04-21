@@ -16,6 +16,18 @@
             </div>
         </section>
 
+        @if(session('success'))
+            <div class="dist-subtle-banner" style="background: #e6f5e8; border-color: #c7e3cb; color: #1f5b22;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="dist-subtle-banner" style="background: #fef2f2; border-color: #fecaca; color: #dc2626;">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <section class="dist-card dist-card-padded" style="margin-bottom: 20px;">
             <h3 style="margin: 0 0 12px 0;">{{ $order['order_id'] }} - {{ $order['product'] }}</h3>
             <div class="dist-info-list">
@@ -32,14 +44,18 @@
                 $steps = ['Preparing', 'On the Way', 'Delivered'];
             @endphp
             <div class="dist-status-tracker">
-                @foreach($steps as $step)
+@foreach($steps as $step)
                     @php
                         $isActive = $order['current_status'] === $step || ($order['current_status'] !== 'Preparing' && $step === 'Preparing');
                         $stepClass = $isActive ? 'dist-status-step--active' : '';
                     @endphp
-                    <div class="dist-status-step {{ $stepClass }}">
-                        {{ $step }}
-                    </div>
+                    <form method="POST" action="{{ route('distributor-update-status', $order['id']) }}" style="display: inline;">
+                        @csrf
+                        <input type="hidden" name="step" value="{{ $step }}">
+                        <button type="submit" class="dist-status-step {{ $stepClass }}" {{ $isActive ? 'disabled' : '' }} style="border: none; background: none; cursor: {{ $isActive ? 'default' : 'pointer' }};">
+                            {{ $step }}
+                        </button>
+                    </form>
                 @endforeach
             </div>
         </section>
