@@ -48,6 +48,7 @@ Route::prefix('distributor')->group(function () {
     Route::get('/dashboard', [DistributorController::class, 'dashboard'])->name('distributor-dashboard');
     Route::get('/available-orders', [DistributorController::class, 'availableOrders'])->name('distributor-available-orders');
     Route::post('/accept-order/{id}', [DistributorController::class, 'acceptOrder'])->name('distributor-accept-order');
+    Route::get('/delivery-tracking/{id}', [DistributorController::class, 'deliveryTracking'])->name('distributor-delivery-tracking');
     Route::get('/track-orders', [DistributorController::class, 'trackOrders'])->name('distributor-track-orders');
     Route::get('/manage-suppliers', [DistributorController::class, 'manageSuppliers'])->name('distributor-manage-suppliers');
     
