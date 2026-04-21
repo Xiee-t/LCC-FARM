@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Illuminate\Support\Facades\Route;
 
 class AuthController extends Controller
 {
@@ -12,8 +16,24 @@ class AuthController extends Controller
     
     public function dashboard()
     {
-        if (!session()->has('user_logged_in')) return redirect()->route('login');
-        return redirect()->route(session('user_role', 'buyer') . '-dashboard');
+        $user = Auth::user();
+        if ($user) {
+            $role = $user->role ?? $this->determineRole($user);
+            $routeName = $role . '-dashboard';
+            if (!empty($role) && Route::has($routeName)) {
+                return redirect()->route($routeName);
+            }
+            return redirect()->route('buyer-dashboard');
+        }
+        return redirect()->route('landing');
+    }
+
+    private function determineRole(User $user)
+    {
+        $email = strtolower($user->email);
+        if (str_contains($email, 'distributor')) return 'distributor';
+        if (str_contains($email, 'supplier')) return 'supplier';
+        return 'buyer';
     }
 
     public function profile()
@@ -47,24 +67,68 @@ class AuthController extends Controller
         }
     }
 
+    public function showLogin()
+    {
+        return view('pages.login');
+    }
+
     public function login(Request $request)
     {
-        $request->validate(['login' => 'required', 'password' => 'required']);
-        
-        session(['user_logged_in' => true, 'user_role' => 'buyer', 'user_identity' => $request->login]);
-        return redirect()->route('buyer-dashboard');
+        $loginField = $request->input('login');
+        $password = $request->input('password');
+
+        $request->validate([
+            'login' => 'required',
+            'password' => 'required',
+        ]);
+
+        // Try as email or phone
+        $credentials = filter_var($loginField, FILTER_VALIDATE_EMAIL) ? ['email' => $loginField, 'password' => $password] : ['phone' => $loginField, 'password' => $password];
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            $userRole = $this->determineRole(Auth::user());
+            session(['user_role' => $userRole]);
+            return redirect()->route($userRole . '-dashboard')->with('success', 'Login successful!');
+
+        }
+
+        return back()->withErrors([
+            'login' => 'The provided credentials do not match our records.',
+        ])->onlyInput('login');
     }
 
-    public function signup(Request $request)
+    public function showRegister()
     {
-        $request->validate(['role' => 'required', 'email' => 'required']);
-        session(['user_logged_in' => true, 'user_role' => $request->role, 'user_identity' => $request->email]);
-        return redirect()->route($request->role . '-dashboard');
+        return view('pages.signup');
     }
 
-    public function logout()
+    public function register(Request $request)
     {
-        session()->flush();
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:buyer,supplier,distributor'],
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route($validated['role'] . '-dashboard')->with('success', 'Registration successful!');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect()->route('landing');
     }
 

@@ -7,10 +7,10 @@ use App\Http\Controllers\DistributorController;
 
 // --- Landing & Auth ---
 Route::get('/', function () { return view('pages.landing_page'); })->name('landing');
-Route::get('/login', function () { return view('pages.login'); })->name('login');
+Route::get('/login', [AuthController::class, 'showLogin'])->middleware('guest')->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::get('/signup', function () { return view('pages.signup'); })->name('signup');
-Route::post('/signup', [AuthController::class, 'signup'])->name('signup.post');
+Route::get('/signup', [AuthController::class, 'showRegister'])->middleware('guest')->name('signup');
+Route::post('/signup', [AuthController::class, 'register'])->name('signup.post');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // --- Navigation ---
@@ -36,12 +36,22 @@ Route::get('/buyer/dashboard', [AuthController::class, 'buyerDashboard'])->name(
 Route::get('/buyer/profile', [AuthController::class, 'profile'])->name('buyer-profile');
 
 // 2. Supplier
+<<<<<<< HEAD
 Route::get('/supplier/dashboard', [SupplierController::class, 'dashboard'])->name('supplier-dashboard');
 Route::get('/supplier/inventory', [SupplierController::class, 'inventory'])->name('supplier-inventory');
 Route::post('/supplier/inventory/{id}', [SupplierController::class, 'updateInventory'])->name('supplier-inventory.update');
 Route::get('/supplier/orders', [SupplierController::class, 'orders'])->name('supplier-orders');
 Route::post('/supplier/orders/{id}', [SupplierController::class, 'updateOrderStatus'])->name('supplier-orders.update');
 Route::get('/supplier/profile', [AuthController::class, 'profile'])->name('supplier-profile');
+=======
+Route::prefix('supplier')->group(function () {
+    Route::get('/dashboard', [SupplierController::class, 'dashboard'])->name('supplier-dashboard');
+    Route::get('/inventory', [SupplierController::class, 'inventory'])->name('supplier-inventory');
+    Route::post('/update-inventory/{id}', [SupplierController::class, 'updateInventory'])->name('supplier-update-inventory');
+    Route::get('/orders', [SupplierController::class, 'orders'])->name('supplier-orders');
+    Route::get('/profile', [SupplierController::class, 'profile'])->name('supplier-profile');
+});
+>>>>>>> a6a6f05d36a51f5cd783b65b097defedca1463a8
 
 // 3. Distributor (Grouped for organization)
 Route::prefix('distributor')->group(function () {
@@ -51,6 +61,7 @@ Route::prefix('distributor')->group(function () {
     Route::get('/delivery-tracking/{id}', [DistributorController::class, 'deliveryTracking'])->name('distributor-delivery-tracking');
     Route::get('/track-orders', [DistributorController::class, 'trackOrders'])->name('distributor-track-orders');
     Route::get('/manage-suppliers', [DistributorController::class, 'manageSuppliers'])->name('distributor-manage-suppliers');
+    Route::post('/update-status/{id}', [DistributorController::class, 'updateStatus'])->name('distributor-update-status');
     
     // Route for the profile page
     Route::get('/profile', [DistributorController::class, 'profile'])->name('distributor-profile');

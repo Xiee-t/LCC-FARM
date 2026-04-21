@@ -22,6 +22,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="dist-subtle-banner" style="background: #fef2f2; border-color: #fecaca; color: #dc2626;">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <section class="dist-card dist-card-padded">
             <div class="dist-table-wrap">
                 <table class="dist-table">

@@ -23,17 +23,19 @@
 
         <div style="background: linear-gradient(145deg, #b84934, #822418); color: #fff; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(139, 38, 31, 0.15);">
             
-            @if(session('success'))
+            @if (session('success'))
                 <div style="background-color: rgba(255,255,255,0.2); color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem;">
                     {{ session('success') }}
                 </div>
             @endif
 
-            @if($errors->any())
+            @if ($errors->any())
                 <div style="background-color: rgba(255,0,0,0.2); color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem;">
-                    @foreach($errors->all() as $error)
-                        <p style="margin: 0;">{{ $error }}</p>
-                    @endforeach
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -47,44 +49,47 @@
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         @foreach(['buyer' => 'Buyer/User', 'distributor' => 'Distributor', 'supplier' => 'Supplier'] as $val => $label)
                         <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08);">
-                            <input type="radio" name="role" value="{{ $val }}" style="cursor: pointer;" required>
+                            <input type="radio" name="role" value="{{ $val }}" style="cursor: pointer;" {{ old('role') == $val ? 'checked' : '' }} required>
                             <span style="font-size: 0.9rem;">{{ $label }}</span>
                         </label>
                         @endforeach
                     </div>
+                    @error('role')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom: 12px;">
-                    <input type="email" name="email" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Email" required>
+                    <input type="text" name="name" value="{{ old('name') }}" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Full Name" required>
+                    @error('name')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 
                 <div style="margin-bottom: 12px;">
-                    <input type="password" name="password" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Password" required>
+                    <input type="email" name="email" value="{{ old('email') }}" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Email" required>
+                    @error('email')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 
-                <div style="margin-bottom: 15px;">
-                    <input type="text" name="phone" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Phone Number" required>
+                <div style="margin-bottom: 12px;">
+                    <input type="password" name="password" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Password (min 8 chars)" required>
+                    @error('password')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-size: 0.85rem; margin-bottom: 8px;">Date of Birth</label>
-                    <div style="display: flex; gap: 8px; width: 100%;">
-                        <input type="text" name="month" style="flex: 1; min-width: 0; padding: 10px; border: none; border-radius: 6px; text-align: center; box-sizing: border-box; font-size: 0.9rem;" placeholder="mm" maxlength="2" required>
-                        <input type="text" name="day" style="flex: 1; min-width: 0; padding: 10px; border: none; border-radius: 6px; text-align: center; box-sizing: border-box; font-size: 0.9rem;" placeholder="dd" maxlength="2" required>
-                        <input type="text" name="year" style="flex: 1; min-width: 0; padding: 10px; border: none; border-radius: 6px; text-align: center; box-sizing: border-box; font-size: 0.9rem;" placeholder="yyyy" maxlength="4" required>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 15px; font-size: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span>Receive exclusive offers via SMS</span>
-                    </label>
+                    <input type="password" name="password_confirmation" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Confirm Password" required>
+                    @error('password_confirmation')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom: 20px; font-size: 0.8rem;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" style="width: 16px; height: 16px; cursor: pointer;" required>
+                        <input type="checkbox" style="width: 16px; height: 16px; cursor: pointer;">
                         <span>I agree to the <a href="#" style="color: #fff; text-decoration: underline;">Privacy Policy</a> and <a href="#" style="color: #fff; text-decoration: underline;">Terms of Use</a></span>
                     </label>
                 </div>
