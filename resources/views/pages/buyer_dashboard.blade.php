@@ -6,7 +6,7 @@
 <div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
-            <h1 style="margin: 0; color: #d32f2f; font-size: 2rem;">Welcome back, {{ explode('@', $identity)[0] ? ucfirst(explode('@', $identity)[0]) : ucfirst($identity) }}!</h1>
+            <h1 style="margin: 0; font-size: 2rem; color: #333; font-weight: 700;">Buyer Dashboard</h1>
             <p style="margin: 4px 0 0 0; color: #555; font-size: 1rem;">Fast order path for buyers. Pick a tray size and checkout efficiently.</p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -21,16 +21,16 @@
             <h3 style="margin: 0 0 15px; color: #333; font-weight: 600;">Quick Summary</h3>
             <div style="display: grid; gap: 12px; font-size: 0.95rem;">
                 <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;">
-                    <span style="color: #666;">Egg sizes available</span>
-                    <span style="color: #333; font-weight: 600;">{{ count($products) }} options</span>
+                    <span style="color: #666;">Available products</span>
+                    <span style="color: #333; font-weight: 600;">0 options</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;">
                     <span style="color: #666;">Trays in stock</span>
-                    <span style="color: #333; font-weight: 600;">{{ $totalStock }} units</span>
+                    <span style="color: #333; font-weight: 600;">0 units</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: #666;">Pending deliveries</span>
-                    <span style="color: #333; font-weight: 600;">{{ $activeOrderCount }} orders</span>
+                    <span style="color: #333; font-weight: 600;">0 orders</span>
                 </div>
             </div>
         </div>
@@ -43,9 +43,10 @@
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 30px;">
+        @if(isset($products) && is_array($products) && count($products) > 0)
         @foreach($products as $product)
             @php
-                $isBestValue = $product['id'] === 'medium';
+                $isBestValue = $product['name'] === 'Medium Eggs';
             @endphp
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0; transition: all 0.2s ease;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -59,6 +60,11 @@
                 <a href="{{ route('place-order') }}?size={{ $product['id'] }}" style="display: block; background: #d32f2f; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem;">Order this size</a>
             </div>
         @endforeach
+        @else
+        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0; text-align: center; color: #666;">
+            <p>No products available yet</p>
+        </div>
+        @endif
     </div>
 
     <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0;">
@@ -67,9 +73,11 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
             <a href="{{ route('my-orders') }}" style="background: #d32f2f; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">My Active Orders</a>
             <a href="{{ route('order-history') }}" style="background: #666; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">Order History</a>
-            <a href="{{ route('buyer-profile') }}" style="background: #666; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">My Profile</a>
+            <a href="{{ route('profile') }}" style="background: #666; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">My Profile</a>
         </div>
     </div>
 </div>
 
 @include('components.footer')
+@endsection
+

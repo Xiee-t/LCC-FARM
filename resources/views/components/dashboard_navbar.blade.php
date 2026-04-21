@@ -43,7 +43,7 @@
                     <a href="{{ route('place-order') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">Place Order</a>
                     <a href="{{ route('my-orders') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">My Orders</a>
                     <a href="{{ route('order-history') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">History</a>
-                    <a href="{{ route('buyer-profile') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">Profile</a>
+
                 @endif
                 <a href="{{ route('logout') }}" style="background-color: #d32f2f; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none; font-size: 0.95rem;">Logout</a>
             </div>

@@ -38,7 +38,7 @@ class AuthController extends Controller
 
     public function profile()
     {
-        if (!session()->has('user_logged_in')) return redirect()->route('login');
+        if (!Auth::check()) return redirect()->route('login');
         return view('pages.profile');
     }
 
@@ -88,9 +88,12 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $userRole = $this->determineRole(Auth::user());
-            session(['user_role' => $userRole]);
+            session([
+                'user_logged_in' => true,
+                'user_role' => $userRole,
+                'user_identity' => Auth::user()->email,
+            ]);
             return redirect()->route($userRole . '-dashboard')->with('success', 'Login successful!');
-
         }
 
         return back()->withErrors([
@@ -120,6 +123,11 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        session([
+            'user_logged_in' => true,
+            'user_role' => $validated['role'],
+            'user_identity' => $user->email,
+        ]);
 
         return redirect()->route($validated['role'] . '-dashboard')->with('success', 'Registration successful!');
     }
@@ -136,18 +144,25 @@ class AuthController extends Controller
 
     public function buyerDashboard()
     {
-        if (!session('user_logged_in')) return redirect()->route('login');
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         return view('pages.buyer_dashboard');
     }
 
     public function placeOrder()
     {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         return view('pages.place_order');
     }
 
     public function myOrders()
     {
-        if (!session('user_logged_in')) return redirect()->route('login');
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         
         $orders = session('user_orders', []);
         return view('pages.my_orders', ['orders' => $orders]);
@@ -155,11 +170,17 @@ class AuthController extends Controller
 
     public function orderDetails($id)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         return view('pages.order_details', ['id' => $id]);
     }
 
     public function storeOrder(Request $request)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         $request->validate([
             'egg_size' => 'required', 
             'quantity' => 'required|integer', 
@@ -178,3 +199,4 @@ class AuthController extends Controller
         return redirect()->route('my-orders')->with('success', 'Order placed successfully!');
     }
 }
+
