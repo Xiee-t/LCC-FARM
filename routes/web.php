@@ -33,9 +33,15 @@ Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderC
 
 // 1. Buyer
 Route::get('/buyer/dashboard', [AuthController::class, 'buyerDashboard'])->name('buyer-dashboard');
+Route::get('/buyer/profile', [AuthController::class, 'profile'])->name('buyer-profile');
 
 // 2. Supplier
 Route::get('/supplier/dashboard', [SupplierController::class, 'dashboard'])->name('supplier-dashboard');
+Route::get('/supplier/inventory', [SupplierController::class, 'inventory'])->name('supplier-inventory');
+Route::post('/supplier/inventory/{id}', [SupplierController::class, 'updateInventory'])->name('supplier-inventory.update');
+Route::get('/supplier/orders', [SupplierController::class, 'orders'])->name('supplier-orders');
+Route::post('/supplier/orders/{id}', [SupplierController::class, 'updateOrderStatus'])->name('supplier-orders.update');
+Route::get('/supplier/profile', [AuthController::class, 'profile'])->name('supplier-profile');
 
 // 3. Distributor (Grouped for organization)
 Route::prefix('distributor')->group(function () {
