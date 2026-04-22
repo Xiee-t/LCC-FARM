@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
 class AuthController extends Controller
@@ -38,7 +40,7 @@ class AuthController extends Controller
 
     public function profile()
     {
-        if (!session()->has('user_logged_in')) return redirect()->route('login');
+        if (!Auth::check()) return redirect()->route('login');
         return view('pages.profile');
     }
 
@@ -88,7 +90,12 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $userRole = $this->determineRole(Auth::user());
-            session(['user_role' => $userRole]);
+            session([
+                'user_logged_in' => true,
+                'user_role' => $userRole,
+                'user_identity' => Auth::user()->email,
+                'user_name' => Auth::user()->name,
+            ]);
             return redirect()->route($userRole . '-dashboard')->with('success', 'Login successful!');
 
         }
@@ -120,6 +127,12 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        session([
+            'user_logged_in' => true,
+            'user_role' => $validated['role'],
+            'user_identity' => $user->email,
+            'user_name' => $user->name,
+        ]);
 
         return redirect()->route($validated['role'] . '-dashboard')->with('success', 'Registration successful!');
     }
@@ -127,6 +140,13 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
+        $request->session()->forget([
+            'user_logged_in',
+            'user_role',
+            'user_identity',
+            'user_name',
+            'user_orders',
+        ]);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('landing');
@@ -136,18 +156,32 @@ class AuthController extends Controller
 
     public function buyerDashboard()
     {
-        if (!session('user_logged_in')) return redirect()->route('login');
-        return view('pages.buyer_dashboard');
+        if (!Auth::check()) return redirect()->route('login');
+
+        $products = $this->buyerProducts();
+        $orders = session('user_orders', []);
+        $identity = session('user_identity', Auth::user()->email);
+        $totalStock = array_sum(array_column($products, 'stock'));
+        $activeOrderCount = count(array_filter($orders, fn ($order) => ($order['status'] ?? null) !== 'Delivered'));
+
+        return view('pages.buyer_dashboard', compact('products', 'identity', 'totalStock', 'activeOrderCount'));
     }
 
     public function placeOrder()
     {
-        return view('pages.place_order');
+        if (!Auth::check()) return redirect()->route('login');
+
+        $products = $this->buyerProducts();
+        $prefill = [
+            'egg_size' => request('size'),
+        ];
+
+        return view('pages.place_order', compact('products', 'prefill'));
     }
 
     public function myOrders()
     {
-        if (!session('user_logged_in')) return redirect()->route('login');
+        if (!Auth::check()) return redirect()->route('login');
         
         $orders = session('user_orders', []);
         return view('pages.my_orders', ['orders' => $orders]);
@@ -162,19 +196,60 @@ class AuthController extends Controller
     {
         $request->validate([
             'egg_size' => 'required', 
-            'quantity' => 'required|integer', 
-            'address' => 'required'
+            'quantity' => 'required|integer|min:1',
+            'address' => 'required',
+            'city' => 'required',
+            'postal_code' => 'required',
+            'delivery_date' => 'required|date',
         ]);
         
         $orders = session('user_orders', []);
         $orders[] = [
-            'id' => rand(1000,9999), 
-            'product' => $request->egg_size,
-            'status' => 'Processing'
+            'id' => rand(1000, 9999),
+            'order_id' => 'ORD-'.rand(1000, 9999),
+            'egg_size' => $request->egg_size,
+            'quantity' => (int) $request->quantity,
+            'address' => $request->address,
+            'city' => $request->city,
+            'postal_code' => $request->postal_code,
+            'delivery_date' => $request->delivery_date,
+            'status' => 'Processing',
         ];
         
         session(['user_orders' => $orders]);
 
         return redirect()->route('my-orders')->with('success', 'Order placed successfully!');
+    }
+
+    private function buyerProducts(): array
+    {
+        try {
+            $products = Product::query()
+                ->get(['name', 'stock', 'price'])
+                ->map(function (Product $product) {
+                    $id = strtolower(str_replace([' eggs', ' egg', ' '], ['', '', '_'], $product->name));
+
+                    return [
+                        'id' => $id,
+                        'name' => $product->name,
+                        'stock' => (int) $product->stock,
+                        'price' => (float) $product->price,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            if (!empty($products)) {
+                return $products;
+            }
+        } catch (QueryException $exception) {
+            // Fall back to static catalog data when the database schema is not set up yet.
+        }
+
+        return [
+            ['id' => 'small', 'name' => 'Small Eggs', 'stock' => 180, 'price' => 180],
+            ['id' => 'medium', 'name' => 'Medium Eggs', 'stock' => 120, 'price' => 210],
+            ['id' => 'large', 'name' => 'Large Eggs', 'stock' => 90, 'price' => 240],
+        ];
     }
 }

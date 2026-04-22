@@ -3,15 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
-use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 
 class SupplierController extends Controller
 {
     public function dashboard()
     {
-<<<<<<< HEAD
-        if (!session('user_logged_in')) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
@@ -23,44 +21,22 @@ class SupplierController extends Controller
         ));
 
         return view('pages.supplier_dashboard', compact('inventory', 'recentOrders', 'alerts'));
-=======
-        $alerts = []; // Low stock alerts (implement later)
-        $inventory = Product::all(); // All products for stats
-$recentOrders = Order::where('supplier', 'like', '%Farm%')->latest()->take(10)->get()->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_id' => $order->order_id,
-                'supplier' => $order->supplier,
-                'product' => $order->product,
-                'quantity' => $order->quantity,
-                'status' => $order->status,
-                'expected_delivery' => $order->expected_delivery,
-                'customer' => 'Distributor ' . substr($order->supplier, 0, 3),
-            ];
-        })->toArray();
-        return view('pages.supplier_dashboard', compact('alerts', 'inventory', 'recentOrders'));
->>>>>>> a6a6f05d36a51f5cd783b65b097defedca1463a8
     }
 
     public function inventory()
     {
-<<<<<<< HEAD
-        if (!session('user_logged_in')) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         return view('pages.inventory_management', [
             'inventory' => $this->inventoryItems(),
         ]);
-=======
-        $products = Product::all();
-        return view('pages.supplier_inventory', compact('products'));
->>>>>>> a6a6f05d36a51f5cd783b65b097defedca1463a8
     }
 
     public function updateInventory(Request $request, $id)
     {
-        if (!session('user_logged_in')) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
@@ -73,23 +49,18 @@ $recentOrders = Order::where('supplier', 'like', '%Farm%')->latest()->take(10)->
 
     public function orders()
     {
-<<<<<<< HEAD
-        if (!session('user_logged_in')) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         return view('pages.order_management', [
             'orders' => $this->supplierOrders(),
         ]);
-=======
-        $orders = Order::latest()->take(10)->get();
-        return view('pages.supplier_orders', compact('orders'));
->>>>>>> a6a6f05d36a51f5cd783b65b097defedca1463a8
     }
 
     public function updateOrderStatus(Request $request, $id)
     {
-        if (!session('user_logged_in')) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
@@ -100,7 +71,15 @@ $recentOrders = Order::where('supplier', 'like', '%Farm%')->latest()->take(10)->
         return back()->with('success', 'Order #' . $id . ' marked as ' . $request->status . '.');
     }
 
-<<<<<<< HEAD
+    public function profile()
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        return view('pages.supplier_profile');
+    }
+
     private function inventoryItems(): array
     {
         return [
@@ -168,10 +147,5 @@ $recentOrders = Order::where('supplier', 'like', '%Farm%')->latest()->take(10)->
                 'expected_delivery' => 'April 20, 2026',
             ],
         ];
-=======
-    public function profile()
-    {
-        return view('pages.supplier_profile');
->>>>>>> a6a6f05d36a51f5cd783b65b097defedca1463a8
     }
 }
