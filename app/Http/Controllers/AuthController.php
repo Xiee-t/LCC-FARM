@@ -334,6 +334,7 @@ class AuthController extends Controller
             ->map(function (EggProduct $product) {
                 return [
                     'id' => $product->id,
+                    'size' => $product->category === 'Tray' ? 'Jumbo' : $product->category,
                     'name' => $this->productDisplayName($product),
                     'stock' => (int) $product->stock_quantity,
                     'price' => (float) $product->price_per_unit,

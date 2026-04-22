@@ -1,93 +1,202 @@
 @extends('layouts.app')
 
 @section('content')
+@include('components.distributor_theme')
 @include('components.dashboard_navbar')
 
-<style>
-    .status-badge { padding: 5px 12px; border-radius: 4px; font-size: 0.9rem; margin: 0; display: inline-block; font-weight: bold; color: white; }
-    .status-processing { background-color: #4caf50; }
-    .status-other { background-color: #ff9800; }
-</style>
+@php
+    $statusClass = $order['status'] === 'Delivered'
+        ? 'dist-status-delivered'
+        : ($order['status'] === 'In Transit' ? 'dist-status-in-transit' : 'dist-status-pending');
+@endphp
 
-<div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h2 style="font-size: 1.8rem; color: #d32f2f; margin: 0;">Order Details</h2>
-        <a href="{{ route('my-orders') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">← Back to Orders</a>
+<div class="dist-page">
+    <div class="dist-shell" style="max-width: 1040px; padding-bottom: 28px;">
+        <section class="dist-hero">
+            <div class="dist-hero-head">
+                <div>
+                    <h1>Order Details</h1>
+                    <p>Review your order summary, delivery address, and current fulfillment status.</p>
+                </div>
+                <a href="{{ route('my-orders') }}" class="dist-back-link">Back to Orders</a>
+            </div>
+        </section>
+
+        <section class="dist-card dist-card-padded" style="display: grid; gap: 20px;">
+            <div class="order-details-grid">
+                <div class="order-details-stat">
+                    <p class="dist-muted" style="margin: 0 0 6px;">Order ID</p>
+                    <h3 style="margin: 0;">{{ $order['order_id'] }}</h3>
+                </div>
+                <div class="order-details-stat">
+                    <p class="dist-muted" style="margin: 0 0 6px;">Order Date</p>
+                    <h3 style="margin: 0;">{{ $order['order_date'] }}</h3>
+                </div>
+                <div class="order-details-stat">
+                    <p class="dist-muted" style="margin: 0 0 6px;">Expected Delivery</p>
+                    <h3 style="margin: 0;">{{ $order['expected_delivery'] }}</h3>
+                </div>
+                <div class="order-details-stat">
+                    <p class="dist-muted" style="margin: 0 0 10px;">Status</p>
+                    <span class="dist-status-chip {{ $statusClass }}">{{ $order['status'] }}</span>
+                </div>
+            </div>
+
+            <div class="order-details-panel">
+                <h3 class="dist-section-title">Product Details</h3>
+                <div class="order-details-grid order-details-grid--compact">
+                    <div>
+                        <p class="dist-muted" style="margin: 0 0 6px;">Product</p>
+                        <p style="margin: 0; font-weight: 700;">{{ $order['product'] }}</p>
+                    </div>
+                    <div>
+                        <p class="dist-muted" style="margin: 0 0 6px;">Unit Price</p>
+                        <p style="margin: 0; font-weight: 700;">PHP {{ number_format($order['unit_price'], 2) }}</p>
+                    </div>
+                    <div>
+                        <p class="dist-muted" style="margin: 0 0 6px;">Quantity</p>
+                        <p style="margin: 0; font-weight: 700;">{{ $order['quantity'] }} trays</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-details-panel">
+                <h3 class="dist-section-title">Delivery Address</h3>
+                <p style="margin: 0 0 8px;">{{ $order['address'] }}</p>
+                <p class="dist-muted" style="margin: 0;">{{ $order['city'] }}</p>
+            </div>
+
+            <div class="order-details-footer">
+                <div class="order-details-footer-actions">
+                    <a href="{{ route('my-orders') }}" class="dist-pill-btn dist-pill-btn-neutral">Back to Orders</a>
+                    <a href="{{ route('place-order') }}" class="dist-pill-btn dist-pill-btn-primary">Place New Order</a>
+                </div>
+
+                <div class="order-details-total-wrap">
+                    <div class="order-details-total-card">
+                        <div class="order-details-total-row">
+                            <span class="dist-muted">Subtotal</span>
+                            <strong>PHP {{ number_format($order['subtotal'], 2) }}</strong>
+                        </div>
+                        <div class="order-details-total-row">
+                            <span class="dist-muted">Delivery Fee</span>
+                            <strong>PHP {{ number_format($order['delivery_fee'], 2) }}</strong>
+                        </div>
+                        <div class="order-details-total-row order-details-total-row--grand">
+                            <span>Total</span>
+                            <strong>PHP {{ number_format($order['total'], 2) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
-
-    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 30px;">
-        <!-- Order Header -->
-        <div style="border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px;">
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Order ID</p>
-                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">{{ $order['order_id'] }}</p>
-                </div>
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Order Date</p>
-                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">{{ $order['order_date'] }}</p>
-                </div>
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Expected Delivery</p>
-                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">{{ $order['expected_delivery'] }}</p>
-                </div>
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Status</p>
-                    <span class="status-badge {{ $order['status'] === 'Processing' ? 'status-processing' : 'status-other' }}">{{ $order['status'] }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Product Details -->
-        <div style="margin-bottom: 30px;">
-            <h3 style="font-size: 1.2rem; color: #333; margin-bottom: 15px;">Product Details</h3>
-            <div style="background: #f9f9f9; padding: 20px; border-radius: 6px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                    <div>
-                        <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Product</p>
-                        <p style="margin: 0; font-weight: bold; font-size: 1rem;">{{ $order['product'] }}</p>
-                    </div>
-                    <div>
-                        <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Unit Price</p>
-                        <p style="margin: 0; font-weight: bold; font-size: 1rem;">₱{{ number_format($order['unit_price']) }}</p>
-                    </div>
-                    <div>
-                        <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Quantity</p>
-                        <p style="margin: 0; font-weight: bold; font-size: 1rem;">{{ $order['quantity'] }} Trays</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Delivery Address -->
-        <div style="margin-bottom: 30px;">
-            <h3 style="font-size: 1.2rem; color: #333; margin-bottom: 15px;">Delivery Address</h3>
-            <div style="background: #f9f9f9; padding: 20px; border-radius: 6px;">
-                <p style="margin: 0 0 10px 0; color: #333;">{{ $order['address'] }}</p>
-                <p style="margin: 0; color: #666;">{{ $order['city'] }}</p>
-            </div>
-        </div>
-
-        <!-- Price Summary -->
-        <div style="border-top: 2px solid #eee; padding-top: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr auto; gap: 40px; max-width: 400px; margin-left: auto;">
-                <p style="margin: 0; color: #666;">Subtotal:</p>
-                <p style="margin: 0; font-weight: bold;">₱{{ number_format($order['subtotal']) }}</p>
-
-                <p style="margin: 0; color: #666;">Delivery Fee:</p>
-                <p style="margin: 0; font-weight: bold;">₱{{ number_format($order['delivery_fee']) }}</p>
-
-                <p style="margin: 10px 0 0 0; color: #333; font-size: 1.1rem; border-top: 2px solid #eee; padding-top: 10px;">Total:</p>
-                <p style="margin: 10px 0 0 0; font-weight: bold; font-size: 1.1rem; border-top: 2px solid #eee; padding-top: 10px; color: #d32f2f;">₱{{ number_format($order['total']) }}</p>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; display: flex; gap: 10px;">
-            <a href="{{ route('my-orders') }}" style="background-color: #f0f0f0; color: #333; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">Back to Orders</a>
-            <a href="{{ route('place-order') }}" style="background-color: #d32f2f; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">Place New Order</a>
-        </div>
-    </div>
+    @include('components.footer')
 </div>
 
+<style>
+    .order-details-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .order-details-grid--compact {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .order-details-stat {
+        padding: 18px;
+        border: 1px solid #efe7e2;
+        border-radius: 16px;
+        background: #fffaf6;
+    }
+
+    .order-details-panel {
+        padding: 20px;
+        border: 1px solid #efe7e2;
+        border-radius: 16px;
+        background: #fbf7f4;
+    }
+
+    .order-details-footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        align-items: end;
+        gap: 24px;
+        min-height: 0;
+    }
+
+    .order-details-footer-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-self: end;
+    }
+
+    .order-details-total-wrap {
+        display: flex;
+        justify-content: flex-end;
+        align-self: start;
+        margin-top: 14px;
+    }
+
+    .order-details-total-card {
+        width: 100%;
+        border: 1px solid #efe7e2;
+        border-radius: 18px;
+        background: #fff;
+        padding: 20px;
+        box-shadow: var(--dist-shadow-soft);
+    }
+
+    .order-details-total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 0;
+    }
+
+    .order-details-total-row--grand {
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 1px solid #eadfd8;
+        font-size: 1.05rem;
+        color: var(--dist-primary);
+    }
+
+    @media (max-width: 900px) {
+        .order-details-grid,
+        .order-details-grid--compact {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .order-details-grid,
+        .order-details-grid--compact {
+            grid-template-columns: 1fr;
+        }
+
+        .order-details-footer {
+            grid-template-columns: 1fr;
+            min-height: 0;
+        }
+
+        .order-details-footer-actions {
+            order: 2;
+        }
+
+        .order-details-total-wrap {
+            justify-content: stretch;
+            order: 1;
+        }
+
+        .order-details-total-card {
+            width: 100%;
+            min-height: 0;
+        }
+    }
+</style>
 @endsection

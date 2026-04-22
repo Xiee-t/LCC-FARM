@@ -38,8 +38,8 @@
                 <div style="margin-bottom: 22px;">
                     <label style="display: block; font-weight: 700; color: #7b2117; margin-bottom: 12px;">Select Egg Type</label>
                     <div class="dist-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                        @foreach (($products ?? []) as $product)
-                            <label class="dist-card dist-card-padded" style="cursor: pointer; box-shadow: none;">
+                        @forelse (($products ?? []) as $product)
+                            <label class="dist-card dist-card-padded dist-egg-option" style="cursor: pointer; box-shadow: none;">
                                 <div style="display: flex; align-items: flex-start; gap: 10px;">
                                     <input type="radio" name="egg_size" value="{{ $product['id'] }}" required style="margin-top: 6px;" {{ old('egg_size', $prefill['egg_size'] ?? null) == $product['id'] ? 'checked' : '' }}>
                                     <div>
@@ -48,7 +48,12 @@
                                     </div>
                                 </div>
                             </label>
-                        @endforeach
+                        @empty
+                            <div class="dist-card dist-card-padded" style="grid-column: 1 / -1; box-shadow: none; background: #fff8f3;">
+                                <h4 style="margin: 0 0 8px; color: #7b2117;">No egg sizes available right now</h4>
+                                <p class="dist-muted" style="margin: 0;">The product catalog is empty. Run the seeder or add rows to `egg_products` to show buyer options here.</p>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -121,6 +126,29 @@
 </div>
 
 <style>
+    .dist-egg-option {
+        border: 1px solid #eadfd8;
+        border-radius: 16px;
+        background: #fff;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .dist-egg-option:hover {
+        border-color: #d8b6aa;
+        box-shadow: 0 10px 20px rgba(29, 33, 28, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .dist-egg-option:has(input:checked) {
+        border-color: #b2352a;
+        box-shadow: 0 12px 24px rgba(178, 53, 42, 0.16);
+        background: #fff8f3;
+    }
+
+    .dist-egg-option h4 {
+        color: #7b2117;
+    }
+
     .dist-order-input {
         padding: 12px 14px;
         border: 1px solid #dfd4ce;

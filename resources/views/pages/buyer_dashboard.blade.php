@@ -48,10 +48,16 @@
             @forelse($products as $product)
                 <article class="dist-card dist-card-padded">
                     <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px;">
-                        <h3 style="margin: 0;">{{ $product['name'] }}</h3>
-                        @if($product['name'] === 'Medium Eggs')
-                            <span class="dist-status-chip dist-status-pending">Best Value</span>
-                        @endif
+                        <div>
+                            <p class="dist-muted" style="margin: 0 0 4px;">Egg Size</p>
+                            <h3 style="margin: 0;">{{ $product['size'] }}</h3>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            <span class="dist-status-chip dist-status-info">{{ $product['name'] }}</span>
+                            @if($product['size'] === 'Medium')
+                                <span class="dist-status-chip dist-status-pending">Best Value</span>
+                            @endif
+                        </div>
                     </div>
 
                     <p style="margin: 0 0 8px; font-size: 1.5rem; font-weight: 800; color: var(--dist-primary);">
