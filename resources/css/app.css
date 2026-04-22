@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    --site-red: #d32f2f;
+    --site-white: #ffffff;
+}
+
+body {
+    background-color: var(--site-white) !important;
+    color: var(--site-red) !important;
+}
+
+/* enforce red / white theme for key UI elements */
+*,
+*::before,
+*::after {
+    border-color: var(--site-red) !important;
+}
+
+a,
+.navbar a,
+a:visited,
+a:hover,
+a:active,
+a:focus {
+    color: var(--site-red) !important;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.btn-update,
+.btn-primary,
+.btn-secondary,
+.alert a,
+.card a,
+.dashboard-link,
+button[type="submit"] {
+    background-color: var(--site-red) !important;
+    color: var(--site-white) !important;
+    border-color: var(--site-red) !important;
+}
+
+button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover {
+    filter: brightness(95%) !important;
+}
+
+/* force tile and panel backgrounds to white with red text where practical */
+.card,
+.panel,
+.container,
+section,
+article,
+div {
+    background-color: var(--site-white) !important;
+    color: var(--site-red) !important;
+}
+
+/* remove legacy color gradients or other colors */
+*[style*="background"] {
+    background-color: var(--site-white) !important;
+    background-image: none !important;
+}
+
+/* status badges and alerts unified in red/white */
+.status-badge,
+.alert,
+.badge,
+.inventory-alert,
+.status-step,
+.status-step--active,
+.status-step--inactive,
+.alert-low,
+.alert-out,
+.alert-good,
+.inventory-good,
+.inventory-low,
+.inventory-out,
+.status-processing,
+.status-other {
+    background-color: var(--site-white) !important;
+    color: var(--site-red) !important;
+    border: 1px solid var(--site-red) !important;
+}
+
