@@ -430,20 +430,24 @@
     }
 
     .dist-status-step {
-        padding: 12px 14px;
-        border-radius: 999px;
-        border: 1px solid #d9cec8;
-        text-align: center;
         min-width: 128px;
-        font-weight: 700;
-        background: #f5efea;
-        color: #6f615b;
+        padding-inline: 16px;
+        text-align: center;
     }
 
     .dist-status-step--active {
-        background: #f3ddd4;
-        color: #7e2d22;
-        border-color: #e2b7a8;
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.14);
+        filter: saturate(1.04);
+    }
+
+    .dist-status-step--inactive {
+        border: 1px solid #d9cec8;
+        color: #6f615b;
+    }
+
+    .dist-status-step:disabled {
+        cursor: default;
+        opacity: 1;
     }
 
     @media (max-width: 900px) {

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Business;
+use App\Models\EggProduct;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,11 +43,16 @@ class SupplierController extends Controller
             return redirect()->route('login');
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'quantity' => 'required|integer|min:0',
         ]);
 
-        return back()->with('success', 'Inventory updated for item #' . $id . '.');
+        $product = EggProduct::findOrFail($id);
+        $product->update([
+            'stock_quantity' => $validated['quantity'],
+        ]);
+
+        return back()->with('success', 'Inventory updated for ' . $this->productName($product) . '.');
     }
 
     public function orders()
@@ -64,11 +72,16 @@ class SupplierController extends Controller
             return redirect()->route('login');
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'status' => 'required|in:Pending,In Progress,Completed',
         ]);
 
-        return back()->with('success', 'Order #' . $id . ' marked as ' . $request->status . '.');
+        $order = $this->supplierOrderQuery()->findOrFail($id);
+        $order->update([
+            'order_status' => $validated['status'],
+        ]);
+
+        return back()->with('success', 'Order #' . $order->order_number . ' marked as ' . $validated['status'] . '.');
     }
 
     public function profile()
@@ -82,70 +95,65 @@ class SupplierController extends Controller
 
     private function inventoryItems(): array
     {
-        return [
-            [
-                'id' => 1,
-                'product' => 'Small Eggs',
-                'stock' => 180,
-                'current_stock' => 180,
-                'min_threshold' => 100,
-                'unit_price' => 180,
-                'status' => 'Good',
-            ],
-            [
-                'id' => 2,
-                'product' => 'Medium Eggs',
-                'stock' => 85,
-                'current_stock' => 85,
-                'min_threshold' => 100,
-                'unit_price' => 210,
-                'status' => 'Low Stock',
-            ],
-            [
-                'id' => 3,
-                'product' => 'Large Eggs',
-                'stock' => 0,
-                'current_stock' => 0,
-                'min_threshold' => 80,
-                'unit_price' => 240,
-                'status' => 'Out of Stock',
-            ],
-        ];
+        return EggProduct::query()
+            ->orderBy('id')
+            ->get()
+            ->map(function (EggProduct $product) {
+                $threshold = (int) ($product->low_stock_threshold ?? 0);
+                $stock = (int) $product->stock_quantity;
+
+                return [
+                    'id' => $product->id,
+                    'product' => $this->productName($product),
+                    'stock' => $stock,
+                    'current_stock' => $stock,
+                    'min_threshold' => $threshold,
+                    'unit_price' => (float) $product->price_per_unit,
+                    'status' => $stock === 0 ? 'Out of Stock' : ($stock <= $threshold ? 'Low Stock' : 'Good'),
+                ];
+            })
+            ->all();
     }
 
     private function supplierOrders(): array
     {
-        return [
-            [
-                'id' => 1,
-                'order_id' => 'ORD-1001',
-                'product' => 'Medium Eggs',
-                'quantity' => 30,
-                'customer' => 'Maria Santos',
-                'status' => 'Pending',
-                'order_date' => 'April 19, 2026',
-                'expected_delivery' => 'April 23, 2026',
-            ],
-            [
-                'id' => 2,
-                'order_id' => 'ORD-1002',
-                'product' => 'Large Eggs',
-                'quantity' => 18,
-                'customer' => 'Ramon Cruz',
-                'status' => 'In Progress',
-                'order_date' => 'April 18, 2026',
-                'expected_delivery' => 'April 22, 2026',
-            ],
-            [
-                'id' => 3,
-                'order_id' => 'ORD-1003',
-                'product' => 'Small Eggs',
-                'quantity' => 25,
-                'customer' => 'Liza Flores',
-                'status' => 'Completed',
-                'order_date' => 'April 16, 2026',
-                'expected_delivery' => 'April 20, 2026',
-            ],
-        ];
+        return $this->supplierOrderQuery()
+            ->with(['user', 'items.product', 'delivery'])
+            ->latest('created_at')
+            ->get()
+            ->map(function (Order $order) {
+                $item = $order->items->first();
+
+                return [
+                    'id' => $order->id,
+                    'order_id' => $order->order_number,
+                    'product' => $item?->product ? $this->productName($item->product) : 'Unknown Product',
+                    'quantity' => (int) ($item?->quantity ?? 0),
+                    'customer' => $order->user?->name ?? 'Guest Customer',
+                    'status' => $order->order_status,
+                    'order_date' => optional($order->created_at)->format('F d, Y'),
+                    'expected_delivery' => optional($order->created_at)->addDays(2)?->format('F d, Y'),
+                ];
+            })
+            ->all();
+    }
+
+    private function supplierOrderQuery()
+    {
+        $businessId = optional($this->currentSupplierBusiness())->id;
+
+        return Order::query()->where('supplier_id', $businessId);
+    }
+
+    private function currentSupplierBusiness(): ?Business
+    {
+        return Auth::user()?->business;
+    }
+
+    private function productName(EggProduct $product): string
+    {
+        return $product->category === 'Tray'
+            ? 'Jumbo Eggs'
+            : $product->category . ' Eggs';
     }
 }

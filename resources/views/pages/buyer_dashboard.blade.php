@@ -1,83 +1,76 @@
 @extends('layouts.app')
 
 @section('content')
+@include('components.distributor_theme')
 @include('components.dashboard_navbar')
 
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div>
-            <h1 style="margin: 0; font-size: 2rem; color: #333; font-weight: 700;">Buyer Dashboard</h1>
-            <p style="margin: 4px 0 0 0; color: #555; font-size: 1rem;">Fast order path for buyers. Pick a tray size and checkout efficiently.</p>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <a href="{{ route('order-history') }}" style="background: #d32f2f; color: #fff; padding: 10px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.12);">Order History</a>
-            <a href="{{ route('my-orders') }}" style="background: #333; color: #fff; padding: 10px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.12);">My Orders</a>
-            <a href="{{ route('place-order') }}" style="background: #d32f2f; color: #fff; padding: 10px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.12);">Quick Order</a>
-        </div>
-    </div>
+<div class="dist-page">
+    <div class="dist-shell" style="padding-bottom: 28px;">
+        <section class="dist-hero">
+            <div class="dist-hero-head">
+                <div>
+                    <h1>Buyer Dashboard</h1>
+                    <p>Track your active deliveries, browse the current catalog, and place a new order without leaving the portal.</p>
+                </div>
+                <a href="{{ route('place-order') }}" class="dist-back-link">Quick Order</a>
+            </div>
+        </section>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 28px;">
-        <div style="background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0;">
-            <h3 style="margin: 0 0 15px; color: #333; font-weight: 600;">Quick Summary</h3>
-            <div style="display: grid; gap: 12px; font-size: 0.95rem;">
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;">
-                    <span style="color: #666;">Available products</span>
-                    <span style="color: #333; font-weight: 600;">0 options</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;">
-                    <span style="color: #666;">Trays in stock</span>
-                    <span style="color: #333; font-weight: 600;">0 units</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #666;">Pending deliveries</span>
-                    <span style="color: #333; font-weight: 600;">0 orders</span>
-                </div>
+        <div class="dist-metrics-grid">
+            <div class="dist-metric-card">
+                <h4>Available Products</h4>
+                <p class="dist-metric-value">{{ count($products) }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Trays in Stock</h4>
+                <p class="dist-metric-value">{{ $totalStock }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Active Orders</h4>
+                <p class="dist-metric-value">{{ $activeOrderCount }}</p>
             </div>
         </div>
 
-        <div style="background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0;">
-            <h3 style="margin: 0 0 10px; color: #333; font-weight: 600;">Best Value</h3>
-            <p style="margin: 0 0 12px; color: #555; font-size: 0.95rem; line-height: 1.5;">Medium (15 Trays) is our most popular pick with balanced price and inventory.</p>
-            <a href="{{ route('place-order') }}?size=medium" style="display: inline-block; background: #d32f2f; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Order Medium</a>
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 30px;">
-        @if(isset($products) && is_array($products) && count($products) > 0)
-        @foreach($products as $product)
-            @php
-                $isBestValue = $product['name'] === 'Medium Eggs';
-            @endphp
-            <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                    <h3 style="margin: 0; color: #333; font-size: 1.05rem; font-weight: 600;">{{ $product['name'] }}</h3>
-                    @if($isBestValue)
-                        <span style="background: #d32f2f; color: white; border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">Best Value</span>
-                    @endif
+        <section class="dist-card dist-card-padded" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap;">
+                <div>
+                    <h3 class="dist-section-title">Catalog</h3>
+                    <p class="dist-muted" style="margin: 0;">Fresh pricing and live inventory from the normalized product catalog.</p>
                 </div>
-                <p style="margin: 0 0 8px; color: #2e7d32; font-size: 1.25rem; font-weight: 800;">₱{{ number_format($product['price']) }}<span style="font-size: 0.9rem; color:#888;">/Tray</span></p>
-                <p style="margin: 0 0 15px; color: #666; font-size: 0.9rem;">Stock: <strong>{{ $product['stock'] }} units</strong></p>
-                <a href="{{ route('place-order') }}?size={{ $product['id'] }}" style="display: block; background: #d32f2f; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem;">Order this size</a>
+                <div class="dist-filters" style="margin-bottom: 0;">
+                    <a href="{{ route('my-orders') }}" class="dist-pill-btn dist-pill-btn-neutral">Active Orders</a>
+                    <a href="{{ route('order-history') }}" class="dist-pill-btn dist-pill-btn-neutral">History</a>
+                </div>
             </div>
-        @endforeach
-        @else
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0; text-align: center; color: #666;">
-            <p>No products available yet</p>
-        </div>
-        @endif
-    </div>
+        </section>
 
-    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border: 1px solid #e0e0e0;">
-        <h3 style="margin: 0 0 10px; color: #333; font-weight: 600;">Quick Navigation</h3>
-        <p style="margin: 0 0 15px; color: #555; font-size: 0.95rem;">Fast access to your orders and account.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-            <a href="{{ route('my-orders') }}" style="background: #d32f2f; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">My Active Orders</a>
-            <a href="{{ route('order-history') }}" style="background: #666; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">Order History</a>
-            <a href="{{ route('profile') }}" style="background: #666; color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">My Profile</a>
+        <div class="dist-grid">
+            @forelse($products as $product)
+                <article class="dist-card dist-card-padded">
+                    <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px;">
+                        <h3 style="margin: 0;">{{ $product['name'] }}</h3>
+                        @if($product['name'] === 'Medium Eggs')
+                            <span class="dist-status-chip dist-status-pending">Best Value</span>
+                        @endif
+                    </div>
+
+                    <p style="margin: 0 0 8px; font-size: 1.5rem; font-weight: 800; color: var(--dist-primary);">
+                        PHP {{ number_format($product['price'], 2) }}
+                    </p>
+                    <p class="dist-muted" style="margin: 0 0 18px;">{{ $product['stock'] }} trays available</p>
+
+                    <a href="{{ route('place-order', ['size' => $product['id']]) }}" class="dist-pill-btn dist-pill-btn-primary" style="width: 100%;">
+                        Order This Size
+                    </a>
+                </article>
+            @empty
+                <section class="dist-card dist-card-padded">
+                    <h3 class="dist-section-title">No Products Available</h3>
+                    <p class="dist-muted" style="margin: 0;">Inventory has not been seeded yet.</p>
+                </section>
+            @endforelse
         </div>
     </div>
+    @include('components.footer')
 </div>
-
-@include('components.footer')
 @endsection
-

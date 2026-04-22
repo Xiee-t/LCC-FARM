@@ -2,13 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Supplier;
-use App\Models\Product;
+use App\Models\Business;
+use App\Models\Delivery;
+use App\Models\EggProduct;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,86 +22,144 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear existing data for these tables
-        Supplier::truncate();
-        Product::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Delivery::truncate();
+        OrderItem::truncate();
         Order::truncate();
+        Business::truncate();
+        EggProduct::truncate();
+        User::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
-        // Create 3 suppliers
-        Supplier::create([
-            'name' => 'LCC Farms',
-            'products' => 'Eggs, Poultry',
-            'rating' => 4.8,
-            'status' => 'Active',
+        $customer = User::create([
+            'name' => 'Buyer User',
+            'email' => 'buyer@gmail.com',
+            'phone' => '09170000001',
+            'password' => Hash::make('password123'),
+            'role' => 'customer',
         ]);
 
-        Supplier::create([
-            'name' => 'Green Valley Farm',
-            'products' => 'Eggs, Feed',
-            'rating' => 4.7,
-            'status' => 'Active',
+        $supplierUser = User::create([
+            'name' => 'Supplier User',
+            'email' => 'supplier@gmail.com',
+            'phone' => '09170000002',
+            'password' => Hash::make('password123'),
+            'role' => 'supplier',
         ]);
 
-        Supplier::create([
-            'name' => 'Sunny Ridge Poultry',
-            'products' => 'Eggs, Chicks',
-            'rating' => 4.5,
-            'status' => 'Active',
+        $supplierUserTwo = User::create([
+            'name' => 'Green Valley Owner',
+            'email' => 'supplier2@gmail.com',
+            'phone' => '09170000004',
+            'password' => Hash::make('password123'),
+            'role' => 'supplier',
         ]);
 
-        // Create 5 products
-        Product::create([
-            'name' => 'Large Eggs',
-            'stock' => 1000,
-            'price' => 50.00,
-            'description' => 'Premium large eggs from free-range hens',
+        $supplierUserThree = User::create([
+            'name' => 'Sunny Ridge Owner',
+            'email' => 'supplier3@gmail.com',
+            'phone' => '09170000005',
+            'password' => Hash::make('password123'),
+            'role' => 'supplier',
         ]);
 
-        Product::create([
-            'name' => 'Medium Eggs',
-            'stock' => 800,
-            'price' => 45.00,
-            'description' => 'Standard medium eggs',
+        $distributorUser = User::create([
+            'name' => 'Distributor User',
+            'email' => 'distributor@gmail.com',
+            'phone' => '09170000003',
+            'password' => Hash::make('password123'),
+            'role' => 'distributor',
         ]);
 
-        Product::create([
-            'name' => 'Jumbo Eggs',
-            'stock' => 500,
-            'price' => 55.00,
-            'description' => 'Extra large jumbo eggs',
+        $supplierBusinesses = collect([
+            Business::create([
+                'user_id' => $supplierUser->id,
+                'business_name' => 'LCC Farms',
+                'address' => 'Barangay San Jose, Legazpi City',
+                'contact_person' => $supplierUser->name,
+            ]),
+            Business::create([
+                'user_id' => $supplierUserTwo->id,
+                'business_name' => 'Green Valley Farm',
+                'address' => 'Daraga, Albay',
+                'contact_person' => $supplierUserTwo->name,
+            ]),
+            Business::create([
+                'user_id' => $supplierUserThree->id,
+                'business_name' => 'Sunny Ridge Poultry',
+                'address' => 'Camalig, Albay',
+                'contact_person' => $supplierUserThree->name,
+            ]),
         ]);
 
-        Product::create([
-            'name' => 'Organic Eggs',
-            'stock' => 300,
-            'price' => 60.00,
-            'description' => 'Certified organic eggs',
+        $distributorBusiness = Business::create([
+            'user_id' => $distributorUser->id,
+            'business_name' => 'LCC Distribution Hub',
+            'address' => 'Main Logistics Center, Legazpi City',
+            'contact_person' => $distributorUser->name,
         ]);
 
-        Product::create([
-            'name' => 'Brown Eggs',
-            'stock' => 600,
-            'price' => 48.00,
-            'description' => 'Healthy brown shell eggs',
+        $products = collect([
+            EggProduct::create([
+                'category' => 'Small',
+                'price_per_unit' => 180.00,
+                'stock_quantity' => 180,
+                'low_stock_threshold' => 80,
+            ]),
+            EggProduct::create([
+                'category' => 'Medium',
+                'price_per_unit' => 210.00,
+                'stock_quantity' => 120,
+                'low_stock_threshold' => 100,
+            ]),
+            EggProduct::create([
+                'category' => 'Large',
+                'price_per_unit' => 240.00,
+                'stock_quantity' => 90,
+                'low_stock_threshold' => 80,
+            ]),
+            EggProduct::create([
+                'category' => 'Tray',
+                'price_per_unit' => 260.00,
+                'stock_quantity' => 60,
+                'low_stock_threshold' => 30,
+            ]),
         ]);
 
-        // Create 10 orders with matching supplier/product names
-        $supplierNames = ['LCC Farms', 'Green Valley Farm', 'Sunny Ridge Poultry'];
-        $productNames = ['Large Eggs', 'Medium Eggs', 'Jumbo Eggs', 'Organic Eggs', 'Brown Eggs'];
-        $statuses = ['Pending', 'Pending', 'Pending', 'Pending', 'In Transit', 'In Transit', 'In Transit', 'Delivered', 'Delivered', 'Accepted'];
-        $prices = [50, 45, 55, 60, 48, 50, 55, 45, 60, 50];
+        $orderStatuses = ['Pending', 'Pending', 'In Progress', 'Completed', 'Pending', 'Completed'];
+        $deliveryStatuses = ['Preparing', 'On the Way', 'On the Way', 'Delivered', 'Preparing', 'Delivered'];
 
-        for ($i = 0; $i < 10; $i++) {
-            Order::create([
-                'order_id' => 'ORD-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
-                'supplier' => $supplierNames[$i % 3],
-                'product' => $productNames[$i % 5],
-                'quantity' => rand(20, 100),
-                'expected_delivery' => now()->addDays(rand(1, 14))->format('Y-m-d'),
-'status' => $statuses[$i],
-                'distributor_id' => null,  // Will be set when accepted
-                'total_price' => rand(20, 100) * $prices[$i % 5],
-                'created_at' => now()->subDays(rand(0, 30)),
+        for ($i = 0; $i < 6; $i++) {
+            $product = $products[$i % $products->count()];
+            $supplier = $supplierBusinesses[$i % $supplierBusinesses->count()];
+            $quantity = 20 + ($i * 8);
+            $totalAmount = ($product->price_per_unit * $quantity) + 50;
+
+            $order = Order::create([
+                'user_id' => $customer->id,
+                'customer_type' => 'registered',
+                'order_number' => 'ORD-' . str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
+                'order_status' => $orderStatuses[$i],
+                'supplier_id' => $supplier->id,
+                'total_amount' => $totalAmount,
+                'created_at' => now()->subDays(6 - $i),
+                'updated_at' => now()->subDays(6 - $i),
+            ]);
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'quantity' => $quantity,
+                'unit_price' => $product->price_per_unit,
+            ]);
+
+            Delivery::create([
+                'order_id' => $order->id,
+                'distributor_id' => $i < 4 ? $distributorBusiness->id : null,
+                'delivery_status' => $deliveryStatuses[$i],
+                'delivery_address' => 'House ' . ($i + 1) . ', Legazpi City, 4500',
+                'suggested_sequence' => $i + 1,
+                'actual_delivery_time' => $deliveryStatuses[$i] === 'Delivered' ? now()->subDays(max(1, 3 - $i)) : null,
             ]);
         }
     }

@@ -47,7 +47,7 @@
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;">Select Your Role</label>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        @foreach(['buyer' => 'Buyer/User', 'distributor' => 'Distributor', 'supplier' => 'Supplier'] as $val => $label)
+                        @foreach(['customer' => 'Buyer/User', 'distributor' => 'Distributor', 'supplier' => 'Supplier'] as $val => $label)
                         <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08);">
                             <input type="radio" name="role" value="{{ $val }}" style="cursor: pointer;" {{ old('role') == $val ? 'checked' : '' }} required>
                             <span style="font-size: 0.9rem;">{{ $label }}</span>

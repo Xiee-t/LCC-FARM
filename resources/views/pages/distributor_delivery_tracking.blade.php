@@ -42,17 +42,22 @@
             <h3 style="margin: 0 0 12px 0;">Status</h3>
             @php
                 $steps = ['Preparing', 'On the Way', 'Delivered'];
+                $stepStyles = [
+                    'Preparing' => 'dist-pill-btn-warn',
+                    'On the Way' => 'dist-pill-btn-info',
+                    'Delivered' => 'dist-pill-btn-success',
+                ];
             @endphp
             <div class="dist-status-tracker">
-@foreach($steps as $step)
+                @foreach($steps as $step)
                     @php
                         $isActive = $order['current_status'] === $step || ($order['current_status'] !== 'Preparing' && $step === 'Preparing');
-                        $stepClass = $isActive ? 'dist-status-step--active' : '';
+                        $stepClass = $isActive ? ($stepStyles[$step] . ' dist-status-step--active') : 'dist-pill-btn-neutral dist-status-step--inactive';
                     @endphp
-                    <form method="POST" action="{{ route('distributor-update-status', $order['id']) }}" style="display: inline;">
+                    <form method="POST" action="{{ route('distributor-update-status', $order['id']) }}" style="display: inline-flex;">
                         @csrf
                         <input type="hidden" name="step" value="{{ $step }}">
-                        <button type="submit" class="dist-status-step {{ $stepClass }}" {{ $isActive ? 'disabled' : '' }} style="border: none; background: none; cursor: {{ $isActive ? 'default' : 'pointer' }};">
+                        <button type="submit" class="dist-pill-btn dist-status-step {{ $stepClass }}" {{ $isActive ? 'disabled' : '' }}>
                             {{ $step }}
                         </button>
                     </form>

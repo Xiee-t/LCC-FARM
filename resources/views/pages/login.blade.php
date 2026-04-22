@@ -2,25 +2,11 @@
 
 @section('content')
 <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         
         .font-fraunces { font-family: 'Fraunces', serif; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        .social-link {
-            background-color: rgba(255,255,255,0.1);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .social-link:hover {
-            background-color: rgba(255,255,255,0.3) !important;
-            transform: scale(1.1);
-            border-color: rgba(255,255,255,0.5);
-        }
     </style>
 </head>
 
@@ -70,20 +56,6 @@
                     <button type="submit" style="width: 100%; background-color: #fff; color: #822418; padding: 14px; border-radius: 25px; font-weight: 700; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">Login</button>
                 </div>
             </form>
-            
-            <p style="text-align: center; font-size: 0.85rem; margin-bottom: 20px; opacity: 0.8;">
-                Login using social media
-            </p>
-            
-            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
-                <a href="{{ route('social.redirect', ['provider' => 'google']) }}" class="social-link" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none;">
-                    <i class="fab fa-google" style="color: white; font-size: 1.3rem;"></i>
-                </a>
-                
-                <a href="{{ route('social.redirect', ['provider' => 'facebook']) }}" class="social-link" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none;">
-                    <i class="fab fa-facebook-f" style="color: white; font-size: 1.3rem;"></i>
-                </a>
-            </div>
 
             <p style="text-align: center; font-size: 0.85rem; margin: 0; opacity: 0.9;">
                 Don't have an account? <a href="{{ route('signup') }}" style="color: #fff; font-weight: 700; text-decoration: underline;">Sign Up</a>

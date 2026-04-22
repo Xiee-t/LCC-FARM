@@ -2,174 +2,176 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Business;
+use App\Models\Delivery;
+use App\Models\EggProduct;
 use App\Models\Order;
-use App\Models\Supplier;
-use App\Models\Product;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DistributorController extends Controller
 {
     public function dashboard()
     {
-        // Metrics
+        $recentDeliveries = $this->deliveryQuery()
+            ->with(['order.items.product', 'order.supplierBusiness'])
+            ->latest('id')
+            ->get();
+
         $stats = [
-            'pending_orders' => Order::pending()->count(),
+            'pending_orders' => $recentDeliveries->where('delivery_status', 'Preparing')->count(),
             'total_orders_month' => Order::thisMonth()->count(),
-            'total_revenue' => Order::thisMonth()->sum('total_price') ?? 0,
-            'active_suppliers' => Supplier::where('status', 'Active')->count(),
+            'total_revenue' => (float) Order::thisMonth()->sum('total_amount'),
+            'active_suppliers' => Business::query()->whereHas('user', fn ($query) => $query->where('role', 'supplier'))->count(),
         ];
 
-        // Recent orders
-        $recentOrders = Order::recent()->get()->map(function ($order) {
-            return [
-                'order_id' => $order->order_id,
-                'supplier' => $order->supplier,
-                'product' => $order->product,
-                'quantity' => $order->quantity,
-                'expected_delivery' => $order->expected_delivery,
-                'status' => $order->status,
-            ];
-        })->toArray();
+        $recentOrders = $recentDeliveries->take(10)->map(function (Delivery $delivery) {
+            $item = $delivery->order?->items->first();
 
-        // Suppliers
-        $suppliers = Supplier::all()->map(function ($supplier) {
             return [
-                'name' => $supplier->name,
-                'status' => $supplier->status,
-                'rating' => $supplier->rating,
-                'products' => $supplier->products,
+                'id' => $delivery->order_id,
+                'order_id' => $delivery->order?->order_number,
+                'supplier' => $delivery->order?->supplierBusiness?->business_name ?? 'Unassigned Supplier',
+                'product' => $item?->product ? $this->productName($item->product) : 'Unknown Product',
+                'quantity' => (int) ($item?->quantity ?? 0),
+                'expected_delivery' => optional($delivery->order?->created_at)->addDays(2)?->toDateString(),
+                'status' => $this->deliveryBadgeStatus($delivery->delivery_status),
             ];
-        })->toArray();
+        })->all();
+
+        $suppliers = $this->supplierCards();
 
         return view('pages.distributor_dashboard', compact('stats', 'recentOrders', 'suppliers'));
     }
 
     public function availableOrders()
     {
-        $orders = Order::pending()->get()->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_id' => $order->order_id,
-                'product' => $order->product,
-                'quantity' => $order->quantity,
-                'supplier' => $order->supplier,
-                'delivery' => $order->expected_delivery,
-            ];
-        })->toArray();
+        $orders = Delivery::query()
+            ->whereNull('distributor_id')
+            ->with(['order.items.product', 'order.supplierBusiness'])
+            ->latest('id')
+            ->get()
+            ->map(function (Delivery $delivery) {
+                $item = $delivery->order?->items->first();
+
+                return [
+                    'id' => $delivery->order_id,
+                    'order_id' => $delivery->order?->order_number,
+                    'product' => $item?->product ? $this->productName($item->product) : 'Unknown Product',
+                    'quantity' => (int) ($item?->quantity ?? 0),
+                    'supplier' => $delivery->order?->supplierBusiness?->business_name ?? 'Unassigned Supplier',
+                    'delivery' => optional($delivery->order?->created_at)->addDays(2)?->toDateString(),
+                ];
+            })
+            ->all();
 
         return view('pages.distributor_available_orders', compact('orders'));
     }
 
     public function acceptOrder($id)
     {
-        $order = Order::findOrFail($id);
-
-        if (Auth::check()) {
-            $userId = Auth::id();
-            if ($order->distributor_id && $order->distributor_id != $userId) {
-                return back()->with('error', 'Unauthorized: This order belongs to another distributor.');
-            }
-            $order->update([
-                'status' => 'Accepted',
-                'distributor_id' => $userId,
-            ]);
-        } else {
+        if (!Auth::check()) {
             return back()->with('error', 'Please login as distributor to accept orders.');
         }
+
+        $delivery = Delivery::query()->where('order_id', $id)->firstOrFail();
+        $business = $this->currentDistributorBusiness();
+
+        if (!$business) {
+            return back()->with('error', 'Distributor business profile is missing.');
+        }
+
+        if ($delivery->distributor_id && $delivery->distributor_id !== $business->id) {
+            return back()->with('error', 'Unauthorized: This order belongs to another distributor.');
+        }
+
+        $delivery->update([
+            'distributor_id' => $business->id,
+            'delivery_status' => 'Preparing',
+        ]);
 
         return back()->with('success', 'Order accepted for delivery.');
     }
 
-    /**
-     * Update order status from tracking page.
-     */
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'step' => 'required|in:Preparing,On the Way,Delivered',
         ]);
 
-        $order = Order::findOrFail($id);
-
-        if (Auth::check()) {
-            $userId = Auth::id();
-            if ($order->distributor_id && $order->distributor_id != $userId) {
-                return back()->with('error', 'Unauthorized: This order belongs to another distributor.');
-            }
-
-            $statusMap = [
-                'Preparing' => 'Accepted',
-                'On the Way' => 'In Transit',
-                'Delivered' => 'Delivered',
-            ];
-
-            $status = $statusMap[$request->step] ?? $order->status;
-
-            $order->update([
-                'status' => $status,
-                'distributor_id' => $userId,
-            ]);
-
-            return back()->with('success', "Order status updated to {$request->step}.");
+        if (!Auth::check()) {
+            return back()->with('error', 'Please login as distributor to update status.');
         }
 
-        return back()->with('error', 'Please login as distributor to update status.');
+        $delivery = Delivery::query()->where('order_id', $id)->firstOrFail();
+        $business = $this->currentDistributorBusiness();
+
+        if (!$business) {
+            return back()->with('error', 'Distributor business profile is missing.');
+        }
+
+        if ($delivery->distributor_id && $delivery->distributor_id !== $business->id) {
+            return back()->with('error', 'Unauthorized: This order belongs to another distributor.');
+        }
+
+        $delivery->update([
+            'distributor_id' => $business->id,
+            'delivery_status' => $validated['step'],
+            'actual_delivery_time' => $validated['step'] === 'Delivered' ? now() : null,
+        ]);
+
+        return back()->with('success', "Order status updated to {$validated['step']}.");
     }
 
     public function trackOrders()
     {
-        $trackedOrders = Order::all()->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_id' => $order->order_id,
-                'supplier' => $order->supplier,
-                'product' => $order->product,
-                'status' => $order->status,
-                'eta' => $order->expected_delivery,
-            ];
-        })->toArray();
+        $trackedOrders = $this->deliveryQuery()
+            ->with(['order.items.product', 'order.supplierBusiness'])
+            ->latest('id')
+            ->get()
+            ->map(function (Delivery $delivery) {
+                $item = $delivery->order?->items->first();
+
+                return [
+                    'id' => $delivery->order_id,
+                    'order_id' => $delivery->order?->order_number,
+                    'supplier' => $delivery->order?->supplierBusiness?->business_name ?? 'Unassigned Supplier',
+                    'product' => $item?->product ? $this->productName($item->product) : 'Unknown Product',
+                    'status' => $this->deliveryBadgeStatus($delivery->delivery_status),
+                    'eta' => optional($delivery->order?->created_at)->addDays(2)?->toDateString(),
+                ];
+            })
+            ->all();
 
         return view('pages.distributor_track_orders', compact('trackedOrders'));
     }
 
     public function manageSuppliers()
     {
-        $suppliers = Supplier::all()->map(function ($supplier) {
-            return [
-                'name' => $supplier->name,
-                'status' => $supplier->status,
-                'rating' => $supplier->rating,
-                'products' => $supplier->products,
-            ];
-        })->toArray();
+        $suppliers = $this->supplierCards();
 
         return view('pages.distributor_manage_suppliers', compact('suppliers'));
     }
 
     public function deliveryTracking($id)
     {
-        $orderModel = Order::findOrFail($id);
+        $delivery = Delivery::query()
+            ->where('order_id', $id)
+            ->with(['order.items.product', 'order.supplierBusiness'])
+            ->firstOrFail();
+
+        $item = $delivery->order?->items->first();
+        $supplierName = $delivery->order?->supplierBusiness?->business_name ?? 'Unassigned Supplier';
+
         $order = [
-            'id' => $orderModel->id,
-            'order_id' => $orderModel->order_id,
-            'supplier' => $orderModel->supplier,
-            'product' => $orderModel->product,
-            'quantity' => $orderModel->quantity,
-            'eta' => $orderModel->expected_delivery,
-            'route' => match($orderModel->supplier) {
-                'LCC Farms' => 'LCC Farms -> City Hub -> Main Store',
-                'Green Valley Farm' => 'Green Valley Farm -> Main Store',
-                'Sunny Ridge Poultry' => 'Sunny Ridge Poultry -> North Warehouse -> Main Store',
-                default => 'Supplier -> Distribution Hub -> Main Store',
-            },
-            'current_status' => match($orderModel->status) {
-                'Pending' => 'Preparing',
-                'In Transit' => 'On the Way',
-                'Accepted', 'Delivered' => 'Delivered',
-                default => $orderModel->status,
-            },
+            'id' => $delivery->order_id,
+            'order_id' => $delivery->order?->order_number,
+            'supplier' => $supplierName,
+            'product' => $item?->product ? $this->productName($item->product) : 'Unknown Product',
+            'quantity' => (int) ($item?->quantity ?? 0),
+            'eta' => optional($delivery->order?->created_at)->addDays(2)?->toDateString(),
+            'route' => $supplierName . ' -> City Hub -> Main Store',
+            'current_status' => $delivery->delivery_status,
         ];
 
         return view('pages.distributor_delivery_tracking', compact('order'));
@@ -179,8 +181,56 @@ class DistributorController extends Controller
     {
         return view('pages.profile');
     }
+
+    private function currentDistributorBusiness(): ?Business
+    {
+        return Auth::user()?->business;
+    }
+
+    private function deliveryQuery()
+    {
+        $business = $this->currentDistributorBusiness();
+
+        return Delivery::query()->when($business, function ($query) use ($business) {
+            $query->where(function ($inner) use ($business) {
+                $inner->whereNull('distributor_id')
+                    ->orWhere('distributor_id', $business->id);
+            });
+        });
+    }
+
+    private function deliveryBadgeStatus(string $deliveryStatus): string
+    {
+        return match ($deliveryStatus) {
+            'On the Way' => 'In Transit',
+            'Delivered' => 'Delivered',
+            default => 'Pending',
+        };
+    }
+
+    private function supplierCards(): array
+    {
+        $catalog = EggProduct::query()->orderBy('id')->get()->map(fn (EggProduct $product) => $this->productName($product))->implode(', ');
+
+        return Business::query()
+            ->whereHas('user', fn ($query) => $query->where('role', 'supplier'))
+            ->with('user')
+            ->get()
+            ->map(function (Business $business) use ($catalog) {
+                return [
+                    'name' => $business->business_name,
+                    'status' => 'Active',
+                    'rating' => 4.8,
+                    'products' => $catalog,
+                ];
+            })
+            ->all();
+    }
+
+    private function productName(EggProduct $product): string
+    {
+        return $product->category === 'Tray'
+            ? 'Jumbo Eggs'
+            : $product->category . ' Eggs';
+    }
 }
-
-
-
-

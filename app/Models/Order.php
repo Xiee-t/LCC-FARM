@@ -4,79 +4,59 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 
 class Order extends Model
 {
     use HasFactory;
 
-    public $timestamps = false; // Only created_at, no updated_at
-
     protected $table = 'orders';
 
     protected $fillable = [
-        'order_id',
-        'supplier',
-        'product',
-        'quantity',
-        'expected_delivery',
-        'status',
-        'total_price',
-        'distributor_id',
+        'user_id',
+        'customer_type',
+        'order_number',
+        'order_status',
+        'supplier_id',
+        'total_amount',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'total_price' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
-    /**
-     * Get the supplier that placed this order.
-     */
-    public function supplier()
+    public function user()
     {
-        return $this->belongsTo(Supplier::class, 'supplier', 'name');
+        return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the product ordered.
-     */
-    public function product()
+    public function supplierBusiness()
     {
-        return $this->belongsTo(Product::class, 'product', 'name');
+        return $this->belongsTo(Business::class, 'supplier_id');
     }
 
-    /**
-     * Scope for pending orders.
-     */
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function delivery()
+    {
+        return $this->hasOne(Delivery::class);
+    }
+
     public function scopePending($query)
     {
-        return $query->where('status', 'Pending');
+        return $query->where('order_status', 'Pending');
     }
 
-    /**
-     * Scope for orders this month.
-     */
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('created_at', now()->month)
                      ->whereYear('created_at', now()->year);
     }
 
-    /**
-     * Scope for recent orders.
-     */
     public function scopeRecent($query)
     {
-        return $query->latest()->take(10);
-    }
-
-    /**
-     * Get the distributor who accepted this order.
-     */
-    public function distributor()
-    {
-        return $this->belongsTo(User::class, 'distributor_id');
+        return $query->latest('created_at')->take(10);
     }
 }
-

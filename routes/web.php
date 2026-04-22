@@ -22,7 +22,7 @@ Route::get('/place-order', [AuthController::class, 'placeOrder'])->name('place-o
 Route::post('/place-order', [AuthController::class, 'storeOrder'])->name('order-confirm');
 Route::get('/my-orders', [AuthController::class, 'myOrders'])->name('my-orders');
 Route::get('/view-orders', [AuthController::class, 'myOrders'])->name('view-orders');
-Route::get('/order-history', [AuthController::class, 'myOrders'])->name('order-history');
+Route::get('/order-history', [AuthController::class, 'orderHistory'])->name('order-history');
 Route::get('/order-details/{id}', [AuthController::class, 'orderDetails'])->name('order-details');
 
 // --- Social Login ---
