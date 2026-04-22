@@ -129,7 +129,7 @@
 
     .order-details-footer-actions {
         display: flex;
-        gap: 12px;
+        gap: 4px;
         flex-wrap: wrap;
         align-self: end;
     }
@@ -138,7 +138,7 @@
         display: flex;
         justify-content: flex-end;
         align-self: start;
-        margin-top: 14px;
+        margin-top: 0;
     }
 
     .order-details-total-card {
@@ -155,12 +155,13 @@
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        padding: 10px 0;
+        padding: 6px 0;
+        margin: 0;
     }
 
     .order-details-total-row--grand {
-        margin-top: 8px;
-        padding-top: 16px;
+        margin-top: 0;
+        padding-top: 12px;
         border-top: 1px solid #eadfd8;
         font-size: 1.05rem;
         color: var(--dist-primary);

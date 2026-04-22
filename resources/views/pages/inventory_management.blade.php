@@ -1,148 +1,191 @@
 @extends('layouts.app')
 
 @section('content')
+@include('components.distributor_theme')
 @include('components.dashboard_navbar')
 
-<style>
-    .stock-zero { color: #d32f2f; font-weight: bold; }
-    .stock-low { color: #ff9800; font-weight: bold; }
-    .stock-sufficient { color: #333; font-weight: normal; }
+@php
+    $lowStockCount = count(array_filter($inventory, fn($item) => $item['status'] !== 'Good'));
+    $totalStockValue = array_sum(array_map(fn($item) => $item['current_stock'] * $item['unit_price'], $inventory));
+@endphp
 
-    .status-good { padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; background-color: #d1e7dd; color: #0f5132; display: inline-block; }
-    .status-low { padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; background-color: #fff3cd; color: #856404; display: inline-block; }
-    .status-out { padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; background-color: #f8d7da; color: #842029; display: inline-block; }
-
-    .btn-update { background-color: #d32f2f; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
-    .btn-update:hover { opacity: 0.9; }
-</style>
-
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h2 style="font-size: 1.8rem; color: #d32f2f; margin: 0;">Inventory Management</h2>
-        <a href="{{ route('supplier-dashboard') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">← Back to Dashboard</a>
-    </div>
-
-    <!-- Search and Filter -->
-    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Search Product</label>
-                <input type="text" placeholder="Search inventory..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+<div class="dist-page">
+    <div class="dist-shell" style="padding-bottom: 28px;">
+        <section class="dist-hero">
+            <div class="dist-hero-head">
+                <div>
+                    <h1>Inventory Management</h1>
+                    <p>Review stock levels, monitor thresholds, and update quantities before they impact incoming orders.</p>
+                </div>
+                <a href="{{ route('supplier-dashboard') }}" class="dist-back-link">Back to Dashboard</a>
             </div>
-            <div>
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Filter by Status</label>
-                <select style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                    <option>All Items</option>
-                    <option>Good</option>
-                    <option>Low Stock</option>
-                    <option>Out of Stock</option>
-                </select>
+        </section>
+
+        @if(session('success'))
+            <div class="dist-subtle-banner" style="background: #e6f5e8; border-color: #c7e3cb; color: #1f5b22;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <section class="dist-card dist-card-padded" style="margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Search Product</label>
+                    <input type="text" placeholder="Search inventory..." class="supplier-input" id="inventorySearch">
+                </div>
+                <div>
+                    <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Filter by Status</label>
+                    <select class="supplier-input" id="inventoryStatusFilter">
+                        <option value="All Items">All Items</option>
+                        <option value="Good">Good</option>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="dist-card dist-card-padded">
+            <div style="display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+                <div>
+                    <h3 class="dist-section-title">Inventory Overview</h3>
+                    <p class="dist-muted" style="margin: 0;">Current quantities, reorder thresholds, and price references for each egg product.</p>
+                </div>
+            </div>
+
+            <div class="dist-table-wrap">
+                <table class="dist-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Current Stock</th>
+                            <th>Min. Threshold</th>
+                            <th>Unit Price</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        @foreach($inventory as $item)
+                            @php
+                                $statusClass = match ($item['status']) {
+                                    'Low Stock' => 'dist-status-pending',
+                                    'Out of Stock' => 'supplier-status-out',
+                                    default => 'dist-status-delivered',
+                                };
+                            @endphp
+                            <tr data-product="{{ strtolower($item['product']) }}" data-status="{{ $item['status'] }}">
+                                <td class="dist-order-id">{{ $item['product'] }}</td>
+                                <td>{{ $item['current_stock'] }} units</td>
+                                <td>{{ $item['min_threshold'] }} units</td>
+                                <td>PHP {{ number_format($item['unit_price'], 2) }}</td>
+                                <td>
+                                    <span class="dist-status-chip {{ $statusClass }}">{{ $item['status'] }}</span>
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="dist-pill-btn dist-pill-btn-primary supplier-update-btn"
+                                        data-id="{{ $item['id'] }}"
+                                        data-product="{{ $item['product'] }}"
+                                        data-current-stock="{{ $item['current_stock'] }}">
+                                        Update
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        <tr id="inventoryEmptyState" style="display: none;">
+                            <td colspan="6" style="text-align: center; color: #7d746f;">No inventory items match the current filters.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="dist-metrics-grid" style="margin-top: 24px;">
+            <div class="dist-metric-card">
+                <h4>Total Products</h4>
+                <p class="dist-metric-value">{{ count($inventory) }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Low/Out of Stock</h4>
+                <p class="dist-metric-value" style="color: #d18a00;">{{ $lowStockCount }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Total Stock Value</h4>
+                <p class="dist-metric-value" style="color: #2e7d32;">PHP {{ number_format($totalStockValue, 2) }}</p>
             </div>
         </div>
     </div>
-
-    <!-- Inventory Table -->
-    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #f9f9f9; border-bottom: 2px solid #eee;">
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Product</th>
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Current Stock</th>
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Min. Threshold</th>
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Unit Price</th>
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Status</th>
-                    <th style="text-align: left; padding: 15px; color: #666; font-weight: bold;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($inventory as $item)
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px; font-weight: bold;">{{ $item['product'] }}</td>
-                    <td style="padding: 15px;">
-                        @php
-                            if($item['current_stock'] === 0) {
-                                $stockClass = 'stock-zero';
-                            } elseif($item['current_stock'] < $item['min_threshold']) {
-                                $stockClass = 'stock-low';
-                            } else {
-                                $stockClass = 'stock-sufficient';
-                            }
-                        @endphp
-                        <span class="{{ $stockClass }}">
-                            {{ $item['current_stock'] }} units
-                        </span>
-                    </td>
-                    <td style="padding: 15px;">{{ $item['min_threshold'] }} units</td>
-                    <td style="padding: 15px;">₱{{ number_format($item['unit_price']) }}</td>
-                    <td style="padding: 15px;">
-                        @php
-                            if($item['status'] === 'Good') {
-                                $statusClass = 'status-good';
-                            } elseif($item['status'] === 'Low Stock') {
-                                $statusClass = 'status-low';
-                            } else {
-                                $statusClass = 'status-out';
-                            }
-                        @endphp
-                        <span class="{{ $statusClass }}">
-                            {{ $item['status'] }}
-                        </span>
-                    </td>
-                    <td style="padding: 15px;">
-                        <button class="btn-update" data-id="{{ $item['id'] }}" data-product="{{ $item['product'] }}" data-current-stock="{{ $item['current_stock'] }}">
-                            Update
-                        </button>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Summary Stats -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px;">
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Total Products</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #d32f2f;">{{ count($inventory) }}</p>
-        </div>
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Low/Out of Stock</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #ff9800;">{{ count(array_filter($inventory, fn($i) => $i['status'] !== 'Good')) }}</p>
-        </div>
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Total Stock Value</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #4caf50;">
-                ₱{{ number_format(array_sum(array_map(fn($i) => $i['current_stock'] * $i['unit_price'], $inventory))) }}
-            </p>
-        </div>
-    </div>
+    @include('components.footer')
 </div>
 
-<!-- Update Modal -->
-<div id="updateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 8px; padding: 30px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-        <h3 id="modalTitle" style="margin-top: 0; color: #d32f2f;">Update Inventory</h3>
+<div id="updateModal" class="supplier-modal" style="display: none;">
+    <div class="supplier-modal-card">
+        <h3 id="modalTitle" style="margin-top: 0; color: #7b2117;">Update Inventory</h3>
         <form id="updateForm" method="POST" action="">
             @csrf
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Current Quantity</label>
-                <input type="number" id="currentQty" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; background: #f9f9f9;">
+            <div style="margin-bottom: 18px;">
+                <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Current Quantity</label>
+                <input type="number" id="currentQty" readonly class="supplier-input" style="background: #f7f2ef;">
             </div>
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">New Quantity</label>
-                <input type="number" name="quantity" id="newQty" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            <div style="margin-bottom: 18px;">
+                <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">New Quantity</label>
+                <input type="number" name="quantity" id="newQty" required min="0" class="supplier-input">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="submit" style="flex: 1; background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
-                    Update Stock
-                </button>
-                <button type="button" onclick="closeUpdateModal()" style="flex: 1; background-color: #f0f0f0; color: #333; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
-                    Cancel
-                </button>
+                <button type="submit" class="dist-pill-btn dist-pill-btn-primary" style="flex: 1;">Update Stock</button>
+                <button type="button" onclick="closeUpdateModal()" class="dist-pill-btn dist-pill-btn-neutral" style="flex: 1;">Cancel</button>
             </div>
         </form>
     </div>
 </div>
+
+<style>
+    .supplier-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #dfd4ce;
+        border-radius: 12px;
+        background: #fff;
+        font: inherit;
+        box-sizing: border-box;
+    }
+
+    .supplier-update-btn {
+        min-width: 96px;
+    }
+
+    .supplier-status-out {
+        background: #f4d8d8;
+        color: #8d1d1d;
+    }
+
+    .supplier-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(34, 25, 20, 0.42);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .supplier-modal-card {
+        width: min(100%, 420px);
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.2);
+        border: 1px solid #efe7e2;
+    }
+
+    @media (max-width: 700px) {
+        .dist-table {
+            min-width: 760px;
+        }
+    }
+</style>
 
 <script>
 function openUpdateModal(id, product, currentQty) {
@@ -165,11 +208,41 @@ function closeUpdateModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.btn-update').forEach(function(button) {
+    document.querySelectorAll('.supplier-update-btn').forEach(function(button) {
         button.addEventListener('click', function() {
             openUpdateModal(button.dataset.id, button.dataset.product, Number(button.dataset.currentStock));
         });
     });
+
+    const searchInput = document.getElementById('inventorySearch');
+    const statusFilter = document.getElementById('inventoryStatusFilter');
+    const rows = Array.from(document.querySelectorAll('#inventoryTableBody tr[data-product]'));
+    const emptyState = document.getElementById('inventoryEmptyState');
+
+    function applyInventoryFilters() {
+        const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+        const selectedStatus = statusFilter?.value || 'All Items';
+        let visibleCount = 0;
+
+        rows.forEach(function(row) {
+            const product = row.dataset.product || '';
+            const status = row.dataset.status || '';
+            const matchesSearch = searchTerm === '' || product.includes(searchTerm);
+            const matchesStatus = selectedStatus === 'All Items' || status === selectedStatus;
+            const shouldShow = matchesSearch && matchesStatus;
+
+            row.style.display = shouldShow ? '' : 'none';
+            if (shouldShow) {
+                visibleCount += 1;
+            }
+        });
+
+        emptyState.style.display = visibleCount === 0 ? '' : 'none';
+    }
+
+    searchInput?.addEventListener('input', applyInventoryFilters);
+    statusFilter?.addEventListener('change', applyInventoryFilters);
+    applyInventoryFilters();
 });
 
 window.onclick = function(event) {
@@ -179,5 +252,4 @@ window.onclick = function(event) {
     }
 }
 </script>
-
 @endsection

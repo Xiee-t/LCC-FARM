@@ -20,7 +20,7 @@ class SupplierController extends Controller
         $recentOrders = $this->supplierOrders();
         $alerts = array_values(array_filter(
             $inventory,
-            fn ($item) => in_array($item['status'], ['Low Stock', 'Out of Stock'], true)
+            fn($item) => in_array($item['status'], ['Low Stock', 'Out of Stock'], true)
         ));
 
         return view('pages.supplier_dashboard', compact('inventory', 'recentOrders', 'alerts'));
@@ -90,7 +90,27 @@ class SupplierController extends Controller
             return redirect()->route('login');
         }
 
-        return view('pages.supplier_profile');
+        $user = Auth::user();
+        $business = $user->business;
+
+        $totalProducts = EggProduct::count();
+        $completedOrders = $business ? Order::where('supplier_id', $business->id)->where('order_status', 'Completed')->count() : 0;
+
+        return view('pages.supplier_profile', [
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone ?: 'Not provided',
+                'role' => $user->role,
+                'member_since' => optional($user->created_at)->format('F d, Y') ?? 'Unknown',
+                'status' => 'Active & Verified',
+                'business_name' => $business?->business_name,
+                'business_address' => $business?->address,
+                'contact_person' => $business?->contact_person,
+                'total_products' => $totalProducts,
+                'completed_orders' => $completedOrders,
+            ],
+        ]);
     }
 
     private function inventoryItems(): array

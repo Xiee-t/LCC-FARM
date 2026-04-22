@@ -22,7 +22,7 @@ class DistributorController extends Controller
             'pending_orders' => $recentDeliveries->where('delivery_status', 'Preparing')->count(),
             'total_orders_month' => Order::thisMonth()->count(),
             'total_revenue' => (float) Order::thisMonth()->sum('total_amount'),
-            'active_suppliers' => Business::query()->whereHas('user', fn ($query) => $query->where('role', 'supplier'))->count(),
+            'active_suppliers' => Business::query()->whereHas('user', fn($query) => $query->where('role', 'supplier'))->count(),
         ];
 
         $recentOrders = $recentDeliveries->take(10)->map(function (Delivery $delivery) {
@@ -179,7 +179,26 @@ class DistributorController extends Controller
 
     public function profile()
     {
-        return view('pages.profile');
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+        $business = $user->business;
+
+        return view('pages.profile', [
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone ?: 'Not provided',
+                'role' => $user->role,
+                'member_since' => optional($user->created_at)->format('F d, Y') ?? 'Unknown',
+                'status' => 'Active & Verified',
+                'business_name' => $business?->business_name,
+                'business_address' => $business?->address,
+                'contact_person' => $business?->contact_person,
+            ],
+        ]);
     }
 
     private function currentDistributorBusiness(): ?Business
@@ -210,10 +229,10 @@ class DistributorController extends Controller
 
     private function supplierCards(): array
     {
-        $catalog = EggProduct::query()->orderBy('id')->get()->map(fn (EggProduct $product) => $this->productName($product))->implode(', ');
+        $catalog = EggProduct::query()->orderBy('id')->get()->map(fn(EggProduct $product) => $this->productName($product))->implode(', ');
 
         return Business::query()
-            ->whereHas('user', fn ($query) => $query->where('role', 'supplier'))
+            ->whereHas('user', fn($query) => $query->where('role', 'supplier'))
             ->with('user')
             ->get()
             ->map(function (Business $business) use ($catalog) {

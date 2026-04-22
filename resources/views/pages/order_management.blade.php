@@ -1,141 +1,260 @@
 @extends('layouts.app')
 
 @section('content')
+@include('components.distributor_theme')
 @include('components.dashboard_navbar')
 
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h2 style="font-size: 1.8rem; color: #d32f2f; margin: 0;">Incoming Orders</h2>
-        <a href="{{ route('supplier-dashboard') }}" style="color: #d32f2f; text-decoration: none; font-size: 0.95rem;">← Back to Dashboard</a>
-    </div>
+@php
+    $pendingCount = count(array_filter($orders, fn($order) => $order['status'] === 'Pending'));
+    $inProgressCount = count(array_filter($orders, fn($order) => $order['status'] === 'In Progress'));
+    $completedCount = count(array_filter($orders, fn($order) => $order['status'] === 'Completed'));
+@endphp
 
-    <!-- Filter Section -->
-    <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-            <div>
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Search Orders</label>
-                <input type="text" placeholder="Search by Order ID..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+<div class="dist-page">
+    <div class="dist-shell" style="padding-bottom: 28px;">
+        <section class="dist-hero">
+            <div class="dist-hero-head">
+                <div>
+                    <h1>Incoming Orders</h1>
+                    <p>Track incoming requests from buyers and keep each order moving through the supplier workflow.</p>
+                </div>
+                <a href="{{ route('supplier-dashboard') }}" class="dist-back-link">Back to Dashboard</a>
             </div>
-            <div>
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Filter by Status</label>
-                <select style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                    <option>All Orders</option>
-                    <option>Pending</option>
-                    <option>In Progress</option>
-                    <option>Completed</option>
-                </select>
-            </div>
-            <div>
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">&nbsp;</label>
-                <button style="width: 100%; background-color: #d32f2f; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    Apply Filters
-                </button>
-            </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Orders Grid -->
-    <div style="display: grid; gap: 20px;">
-        @foreach($orders as $order)
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; border-left: 4px solid #d32f2f;">
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: center; margin-bottom: 15px;">
+        <section class="dist-card dist-card-padded" style="margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end;">
                 <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Order ID</p>
-                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">{{ $order['order_id'] }}</p>
+                    <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Search Orders</label>
+                    <input type="text" placeholder="Search by Order ID..." class="supplier-order-input">
                 </div>
                 <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Product</p>
-                    <p style="margin: 0; font-weight: bold;">{{ $order['product'] }}</p>
+                    <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Filter by Status</label>
+                    <select class="supplier-order-input">
+                        <option>All Orders</option>
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Completed</option>
+                    </select>
                 </div>
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Quantity</p>
-                    <p style="margin: 0; font-weight: bold;">{{ $order['quantity'] }} Trays</p>
-                </div>
-                <div>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0 0 5px 0;">Status</p>
-                    <span class="status-chip">{{ $order['status'] }}</span>
-                </div>
-                <button class="status-btn" data-order-id="{{ $order['id'] }}" data-order-label="{{ $order['order_id'] }}" data-order-status="{{ $order['status'] }}" 
-                    style="background-color: #d32f2f; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
-                    Update Status
-                </button>
+                <button type="button" class="dist-pill-btn dist-pill-btn-primary" style="min-width: 180px; padding-block: 12px;">Apply Filters</button>
             </div>
+        </section>
 
-            <!-- Order Details -->
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 4px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                <div>
-                    <p style="margin: 0 0 5px 0; color: #666; font-size: 0.9rem;">Customer</p>
-                    <p style="margin: 0; font-weight: bold;">{{ $order['customer'] }}</p>
-                </div>
-                <div>
-                    <p style="margin: 0 0 5px 0; color: #666; font-size: 0.9rem;">Order Date</p>
-                    <p style="margin: 0; font-weight: bold;">{{ $order['order_date'] }}</p>
-                </div>
-                <div>
-                    <p style="margin: 0 0 5px 0; color: #666; font-size: 0.9rem;">Expected Delivery</p>
-                    <p style="margin: 0; font-weight: bold;">{{ $order['expected_delivery'] }}</p>
-                </div>
+        <div class="dist-metrics-grid" style="grid-template-columns: repeat(4, minmax(180px, 1fr));">
+            <div class="dist-metric-card">
+                <h4>Total Orders</h4>
+                <p class="dist-metric-value">{{ count($orders) }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Pending</h4>
+                <p class="dist-metric-value" style="color: #d18a00;">{{ $pendingCount }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>In Progress</h4>
+                <p class="dist-metric-value" style="color: #2c7be5;">{{ $inProgressCount }}</p>
+            </div>
+            <div class="dist-metric-card">
+                <h4>Completed</h4>
+                <p class="dist-metric-value" style="color: #2e7d32;">{{ $completedCount }}</p>
             </div>
         </div>
-        @endforeach
-    </div>
 
-    <!-- Order Stats -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-top: 30px;">
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Total Orders</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #d32f2f;">{{ count($orders) }}</p>
-        </div>
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Pending</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #ff9800;">{{ count(array_filter($orders, fn($o) => $o['status'] === 'Pending')) }}</p>
-        </div>
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">In Progress</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #2196f3;">{{ count(array_filter($orders, fn($o) => $o['status'] === 'In Progress')) }}</p>
-        </div>
-        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Completed</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #4caf50;">{{ count(array_filter($orders, fn($o) => $o['status'] === 'Completed')) }}</p>
-        </div>
+        @if(empty($orders))
+            <section class="dist-card dist-card-padded">
+                <h3 class="dist-section-title">No Orders Yet</h3>
+                <p class="dist-muted" style="margin: 0;">Incoming supplier orders will appear here once buyers start placing requests.</p>
+            </section>
+        @else
+            <div class="dist-grid" style="grid-template-columns: 1fr;">
+                @foreach($orders as $order)
+                    @php
+                        $statusClass = match ($order['status']) {
+                            'Completed' => 'dist-status-delivered',
+                            'In Progress' => 'dist-status-in-transit',
+                            default => 'dist-status-pending',
+                        };
+                    @endphp
+                    <section class="dist-card dist-card-padded supplier-order-card">
+                        <div class="supplier-order-head">
+                            <div class="supplier-order-meta">
+                                <div>
+                                    <p class="dist-muted supplier-order-label">Order ID</p>
+                                    <p class="supplier-order-value">{{ $order['order_id'] }}</p>
+                                </div>
+                                <div>
+                                    <p class="dist-muted supplier-order-label">Product</p>
+                                    <p class="supplier-order-value">{{ $order['product'] }}</p>
+                                </div>
+                                <div>
+                                    <p class="dist-muted supplier-order-label">Quantity</p>
+                                    <p class="supplier-order-value">{{ $order['quantity'] }} trays</p>
+                                </div>
+                                <div>
+                                    <p class="dist-muted supplier-order-label">Status</p>
+                                    <span class="dist-status-chip {{ $statusClass }}">{{ $order['status'] }}</span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="dist-pill-btn dist-pill-btn-primary status-btn"
+                                data-order-id="{{ $order['id'] }}"
+                                data-order-label="{{ $order['order_id'] }}"
+                                data-order-status="{{ $order['status'] }}">
+                                Update Status
+                            </button>
+                        </div>
+
+                        <div class="supplier-order-detail-grid">
+                            <div>
+                                <p class="dist-muted supplier-order-label">Customer</p>
+                                <p class="supplier-order-detail">{{ $order['customer'] }}</p>
+                            </div>
+                            <div>
+                                <p class="dist-muted supplier-order-label">Order Date</p>
+                                <p class="supplier-order-detail">{{ $order['order_date'] }}</p>
+                            </div>
+                            <div>
+                                <p class="dist-muted supplier-order-label">Expected Delivery</p>
+                                <p class="supplier-order-detail">{{ $order['expected_delivery'] }}</p>
+                            </div>
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+        @endif
     </div>
+    @include('components.footer')
 </div>
 
-<!-- Status Update Modal -->
-<div id="statusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 8px; padding: 30px; width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-        <h3 id="statusModalTitle" style="margin-top: 0; color: #d32f2f;">Update Order Status</h3>
+<div id="statusModal" class="supplier-modal" style="display: none;">
+    <div class="supplier-modal-card">
+        <h3 id="statusModalTitle" style="margin-top: 0; color: #7b2117;">Update Order Status</h3>
         <form id="statusForm" method="POST" action="">
             @csrf
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">Current Status</label>
-                <input type="text" id="currentStatus" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; background: #f9f9f9;">
+            <div style="margin-bottom: 18px;">
+                <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">Current Status</label>
+                <input type="text" id="currentStatus" readonly class="supplier-order-input" style="background: #f7f2ef;">
             </div>
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">New Status</label>
-                <select name="status" id="newStatus" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                    <option value="">-- Select Status --</option>
+            <div style="margin-bottom: 18px;">
+                <label class="dist-muted" style="display: block; margin-bottom: 8px; font-weight: 700;">New Status</label>
+                <select name="status" id="newStatus" required class="supplier-order-input">
+                    <option value="">Select status</option>
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
                 </select>
             </div>
-            <div style="background: #f0f0f0; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">Status Flow:</p>
-                <p style="margin: 0; font-size: 0.85rem; color: #666;">Pending → In Progress → Completed</p>
+            <div class="dist-subtle-banner" style="margin-bottom: 18px;">
+                Pending -> In Progress -> Completed
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="submit" style="flex: 1; background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
-                    Update Status
-                </button>
-                <button type="button" onclick="closeStatusModal()" style="flex: 1; background-color: #f0f0f0; color: #333; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
-                    Cancel
-                </button>
+                <button type="submit" class="dist-pill-btn dist-pill-btn-primary" style="flex: 1;">Update Status</button>
+                <button type="button" onclick="closeStatusModal()" class="dist-pill-btn dist-pill-btn-neutral" style="flex: 1;">Cancel</button>
             </div>
         </form>
     </div>
 </div>
+
+<style>
+    .supplier-order-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #dfd4ce;
+        border-radius: 12px;
+        background: #fff;
+        font: inherit;
+        box-sizing: border-box;
+    }
+
+    .supplier-order-card {
+        display: grid;
+        gap: 18px;
+    }
+
+    .supplier-order-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .supplier-order-meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        flex: 1;
+    }
+
+    .supplier-order-label {
+        margin: 0 0 6px;
+        font-size: 0.85rem;
+    }
+
+    .supplier-order-value {
+        margin: 0;
+        font-weight: 700;
+        color: #2f2f2f;
+    }
+
+    .supplier-order-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding: 16px;
+        border-radius: 16px;
+        background: #fbf7f4;
+        border: 1px solid #efe7e2;
+    }
+
+    .supplier-order-detail {
+        margin: 0;
+        font-weight: 700;
+        color: #2f2f2f;
+    }
+
+    .supplier-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(34, 25, 20, 0.42);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .supplier-modal-card {
+        width: min(100%, 460px);
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.2);
+        border: 1px solid #efe7e2;
+    }
+
+    @media (max-width: 900px) {
+        .supplier-order-meta {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .supplier-order-detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .supplier-order-head {
+            flex-direction: column;
+        }
+
+        .supplier-order-meta,
+        .dist-metrics-grid[style] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
 
 <script>
 function openStatusModal(id, orderId, currentStatus) {
@@ -172,5 +291,4 @@ window.onclick = function(event) {
     }
 }
 </script>
-
 @endsection

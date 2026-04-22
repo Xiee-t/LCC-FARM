@@ -1,16 +1,19 @@
-# Laravel Distributor Backend Setup - Progress Tracker
+# TODO: Fix Supplier Profile Error
 
-## Completed:
-✅ Step 1: Created app/Models/Product.php with name-based relationships
-✅ Step 2: Created app/Models/Supplier.php with name-based relationships  
-✅ Step 3: Created app/Models/Order.php with scopes and relationships
+## Steps to complete:
 
-## Pending:
-- [ ] Step 6: Execute `php artisan db:seed`
-- [ ] Step 5: Update database/seeders/DatabaseSeeder.php with dummy data
-- [ ] Step 6: Execute `php artisan db:seed`
-- [ ] Step 7: Verify views populate with real data
+### 1. [x] Update SupplierController.php profile() method
 
-## Next Action:
-Update DistributorController to replace mock data with real Eloquent queries.
+- Add computation for `$totalProducts = EggProduct::count();`
+- Add computation for `$completedOrders = Order::where('supplier_id', $business->id)->where('order_status', 'Completed')->count()`
+- Add keys to `$profile` array: `'total_products' => $totalProducts,` and `'completed_orders' => $completedOrders,`
 
+### 2. [ ] Clear Laravel caches
+
+- Run `php artisan config:clear && php artisan cache:clear && php artisan view:clear`
+
+### 3. [ ] Test the supplier profile page
+
+- Visit http://127.0.0.1:8000/supplier/profile as logged-in supplier
+
+**Status: Step 1 completed. Run cache clear command next, then test.**
