@@ -160,9 +160,7 @@ class SupplierController extends Controller
 
     private function supplierOrderQuery()
     {
-        $businessId = optional($this->currentSupplierBusiness())->id;
-
-        return Order::query()->where('supplier_id', $businessId);
+        return Order::query()->whereHas('items');
     }
 
     private function currentSupplierBusiness(): ?Business

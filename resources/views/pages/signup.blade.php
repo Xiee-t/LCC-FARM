@@ -89,9 +89,12 @@
 
                 <div style="margin-bottom: 20px; font-size: 0.8rem;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" style="width: 16px; height: 16px; cursor: pointer;">
+                        <input type="checkbox" name="terms" value="1" style="width: 16px; height: 16px; cursor: pointer;" {{ old('terms') ? 'checked' : '' }} required>
                         <span>I agree to the <a href="#" style="color: #fff; text-decoration: underline;">Privacy Policy</a> and <a href="#" style="color: #fff; text-decoration: underline;">Terms of Use</a></span>
                     </label>
+                    @error('terms')
+                        <span style="color: #ffcccc; font-size: 0.8rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div style="text-align: center;">

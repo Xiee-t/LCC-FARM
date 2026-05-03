@@ -51,15 +51,24 @@
                                 <td>{{ $order['delivery'] }}</td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                        <form method="POST" action="{{ route('distributor-accept-order', ['id' => $order['id']]) }}" style="display: inline;">
-                                            @csrf
-                                            <button type="submit" class="dist-pill-btn dist-pill-btn-success">Accept</button>
-                                        </form>
+                                        @if($order['is_assigned'])
+                                            <span class="dist-status-chip dist-status-in-transit">Accepted</span>
+                                        @else
+                                            <form method="POST" action="{{ route('distributor-accept-order', ['id' => $order['id']]) }}" style="display: inline;">
+                                                @csrf
+                                                <button type="submit" class="dist-pill-btn dist-pill-btn-success">Accept</button>
+                                            </form>
+                                        @endif
                                         <a href="{{ route('distributor-delivery-tracking', ['id' => $order['id']]) }}" class="dist-pill-btn dist-pill-btn-primary">View</a>
                                     </div>
                                 </td>
                             </tr>
                         @endforeach
+                        @if(empty($orders))
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #7d746f;">No active delivery orders yet.</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

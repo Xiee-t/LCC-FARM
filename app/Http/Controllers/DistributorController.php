@@ -47,7 +47,7 @@ class DistributorController extends Controller
     public function availableOrders()
     {
         $orders = Delivery::query()
-            ->whereNull('distributor_id')
+            ->where('delivery_status', '!=', 'Delivered')
             ->with(['order.items.product', 'order.supplierBusiness'])
             ->latest('id')
             ->get()
@@ -61,6 +61,7 @@ class DistributorController extends Controller
                     'quantity' => (int) ($item?->quantity ?? 0),
                     'supplier' => $delivery->order?->supplierBusiness?->business_name ?? 'Unassigned Supplier',
                     'delivery' => optional($delivery->order?->created_at)->addDays(2)?->toDateString(),
+                    'is_assigned' => (bool) $delivery->distributor_id,
                 ];
             })
             ->all();
@@ -208,14 +209,7 @@ class DistributorController extends Controller
 
     private function deliveryQuery()
     {
-        $business = $this->currentDistributorBusiness();
-
-        return Delivery::query()->when($business, function ($query) use ($business) {
-            $query->where(function ($inner) use ($business) {
-                $inner->whereNull('distributor_id')
-                    ->orWhere('distributor_id', $business->id);
-            });
-        });
+        return Delivery::query();
     }
 
     private function deliveryBadgeStatus(string $deliveryStatus): string

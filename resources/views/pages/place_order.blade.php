@@ -41,7 +41,7 @@
                         @forelse (($products ?? []) as $product)
                             <label class="dist-card dist-card-padded dist-egg-option" style="cursor: pointer; box-shadow: none;">
                                 <div style="display: flex; align-items: flex-start; gap: 10px;">
-                                    <input type="radio" name="egg_size" value="{{ $product['id'] }}" required style="margin-top: 6px;" {{ old('egg_size', $prefill['egg_size'] ?? null) == $product['id'] ? 'checked' : '' }}>
+                                    <input type="radio" name="egg_size" value="{{ $product['id'] }}" data-stock="{{ $product['stock'] }}" required style="margin-top: 6px;" {{ old('egg_size', $prefill['egg_size'] ?? null) == $product['id'] ? 'checked' : '' }}>
                                     <div>
                                         <h4 style="margin: 0 0 6px;">{{ $product['name'] }}</h4>
                                         <p class="dist-muted" style="margin: 0;">PHP {{ number_format($product['price'], 2) }}/tray</p>
@@ -60,7 +60,7 @@
                 <div style="display: grid; gap: 18px; margin-bottom: 20px;">
                     <div>
                         <label style="display: block; font-weight: 700; color: #7b2117; margin-bottom: 8px;">Quantity (Trays)</label>
-                        <input type="number" name="quantity" min="1" value="{{ old('quantity', $prefill['quantity'] ?? 1) }}" class="dist-order-input" style="width: 100%;" required>
+                        <input type="number" name="quantity" min="1" max="{{ max(1, max(array_column($products ?? [], 'stock') ?: [1])) }}" value="{{ old('quantity', $prefill['quantity'] ?? 1) }}" class="dist-order-input" style="width: 100%;" required>
                     </div>
                     <div>
                         <label style="display: block; font-weight: 700; color: #7b2117; margin-bottom: 8px;">Delivery Address</label>
@@ -286,6 +286,13 @@
             "{{ $product['id'] }}": {{ $product['price'] }},
         @endforeach
     };
+    const stockMap = {
+        @foreach (($products ?? []) as $product)
+            "{{ $product['id'] }}": {{ $product['stock'] }},
+        @endforeach
+    };
+    const maxTotalAmount = 99999999.99;
+    const deliveryFee = 50;
     const minimumDeliveryDate = "{{ $minimumDeliveryDate }}";
     const deliveryDateInput = document.getElementById('delivery_date');
     const deliveryDateTrigger = document.getElementById('deliveryDateTrigger');
@@ -303,14 +310,32 @@
     function updateTotals() {
         let price = 0;
         const selected = document.querySelector('input[name="egg_size"]:checked');
-        const quantity = Number(document.querySelector('input[name="quantity"]').value || 0);
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        const quantity = Number(quantityInput.value || 0);
 
         if (selected && sizeMap[selected.value]) {
             price = sizeMap[selected.value] * quantity;
         }
 
         document.getElementById('subtotal').textContent = 'PHP ' + price.toFixed(2);
-        document.getElementById('total').textContent = 'PHP ' + (price + 50).toFixed(2);
+        document.getElementById('total').textContent = 'PHP ' + (price + deliveryFee).toFixed(2);
+    }
+
+    function updateQuantityLimit() {
+        const selected = document.querySelector('input[name="egg_size"]:checked');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+
+        if (!selected || !sizeMap[selected.value]) {
+            return;
+        }
+
+        const maxByTotal = Math.floor((maxTotalAmount - deliveryFee) / sizeMap[selected.value]);
+        const maxQuantity = Math.max(0, Math.min(stockMap[selected.value] || 0, maxByTotal));
+        quantityInput.max = String(maxQuantity);
+
+        if (Number(quantityInput.value) > maxQuantity) {
+            quantityInput.value = maxQuantity;
+        }
     }
 
     function formatDateLabel(date) {
@@ -414,10 +439,14 @@
         }
     });
 
-    document.querySelector('form').addEventListener('change', updateTotals);
+    document.querySelector('form').addEventListener('change', () => {
+        updateQuantityLimit();
+        updateTotals();
+    });
     document.querySelector('input[name="quantity"]').addEventListener('input', updateTotals);
     syncDateLabel();
     renderCalendar();
+    updateQuantityLimit();
     updateTotals();
 </script>
 @endsection

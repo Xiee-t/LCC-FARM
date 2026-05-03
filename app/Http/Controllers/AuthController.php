@@ -135,6 +135,7 @@ class AuthController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:buyer,customer,supplier,distributor'],
+            'terms' => ['accepted'],
         ]);
 
         $role = $validated['role'] === 'buyer' ? 'customer' : $validated['role'];
@@ -277,16 +278,25 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
+        $request->validate([
+            'egg_size' => 'required|exists:egg_products,id',
+        ]);
+
+        $product = EggProduct::findOrFail($request->input('egg_size'));
+        $maxTotalAmount = 99999999.99;
+        $maxQuantityByTotal = max(0, (int) floor(($maxTotalAmount - self::DELIVERY_FEE) / (float) $product->price_per_unit));
+        $maxQuantity = min((int) $product->stock_quantity, $maxQuantityByTotal);
+
         $validated = $request->validate([
             'egg_size' => 'required|exists:egg_products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . $maxQuantity],
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'postal_code' => 'required|string|max:20',
             'delivery_date' => 'required|date|after:tomorrow',
+        ], [
+            'quantity.max' => 'The quantity is too high for the selected product. Please order no more than ' . $maxQuantity . ' trays.',
         ]);
-
-        $product = EggProduct::findOrFail($validated['egg_size']);
         $supplier = $this->resolveSupplierBusiness($product);
 
         $order = DB::transaction(function () use ($validated, $product, $supplier) {
